@@ -1,0 +1,41 @@
+# Local workspace and reference material
+/.agents/
+/.aws/
+/.codex/
+/artifacts/
+/backups/
+/references/
+/IMAGES/
+/hardware-models/
+/profile-webapp/
+/example/
+/simple_test/
+/luckfox_pico_rtsp_yolov5/
+/cctv_npu_output_fix_complete/
+/diagnostics/
+/packages/archive/
+/docs/organization-*/
+/deliverables/heartbeat
+
+# Generated output and local configuration
+build/
+dist/
+out/
+__pycache__/
+*.py[cod]
+*.o
+*.obj
+*.exe
+*.ko
+*.log
+*.zip
+*.img
+*.pdf
+.env
+.env.*
+*.conf
+*.key
+*.pem
+
+# Default-disabled heartbeat configuration shipped with the source
+!/deliverables/i1_heartbeat_offline/i1_heartbeat/heartbeat.conf

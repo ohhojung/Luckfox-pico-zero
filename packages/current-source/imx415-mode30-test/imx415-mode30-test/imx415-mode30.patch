@@ -1,0 +1,34 @@
+--- a/drivers/media/i2c/imx415.c
++++ b/drivers/media/i2c/imx415.c
+@@ -1268,13 +1268,13 @@
+ 		.height = 2192,
+ 		.max_fps = {
+ 			.numerator = 10000,
+-			.denominator = 200000,
++			.denominator = 300000,
+ 		},
+ 		.exp_def = 0x08ca - 0x08,
+ 		.hts_def = 0x044c * IMX415_4LANES * 2,
+ 		.vts_def = 0x08ca,
+ 		.global_reg_list = imx415_global_10bit_3864x2192_regs,
+-		.reg_list = imx415_linear_10bit_3864x2192_594M_regs,
++		.reg_list = imx415_linear_10bit_3864x2192_891M_regs,
+ 		.hdr_mode = NO_HDR,
+ 		.mipi_freq_idx = 1,
+ 		.bpp = 10,
+@@ -1287,13 +1287,13 @@
+ 		.height = 2192,
+ 		.max_fps = {
+ 			.numerator = 10000,
+-			.denominator = 300000,
++			.denominator = 200000,
+ 		},
+ 		.exp_def = 0x08ca - 0x08,
+ 		.hts_def = 0x044c * IMX415_4LANES * 2,
+ 		.vts_def = 0x08ca,
+ 		.global_reg_list = imx415_global_10bit_3864x2192_regs,
+-		.reg_list = imx415_linear_10bit_3864x2192_891M_regs,
++		.reg_list = imx415_linear_10bit_3864x2192_594M_regs,
+ 		.hdr_mode = NO_HDR,
+ 		.mipi_freq_idx = 1,
+ 		.bpp = 10,

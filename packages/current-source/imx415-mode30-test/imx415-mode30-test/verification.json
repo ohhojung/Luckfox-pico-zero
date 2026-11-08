@@ -1,0 +1,7 @@
+{
+  "original_sha256": "a3a847eafb1b8a675af60ed436a73977229c5e6c98c6fb6c8e3a1064bf2d9831",
+  "modified_sha256": "01d58e9cdac2341501a45c346ebce5d9868c839c95d9135ce9844a362d881c8a",
+  "change": "swap first two complete 4-lane modes only",
+  "build_tested": false,
+  "board_tested": false
+}
