@@ -3,11 +3,13 @@
 # This script never modifies or brings up WireGuard itself.
 BIN=/usr/bin/i1-heartbeat
 PIDFILE=/var/run/i1-heartbeat.pid
-ENABLED=0
-HOST=
+ENABLED=1
+HOST=10.0.0.100
 PORT=3000
-MAC_INTERFACE=eth0
-WG_INTERFACE=wg1
+MAC_INTERFACE=wlan0
+WG_INTERFACE=wg0
+RTSP_PROCESS=cctv-dual-rtsp
+# Optional overrides for boards with an existing service configuration.
 [ ! -r /etc/heartbeat.conf ] || . /etc/heartbeat.conf
 running() {
     [ -r "$PIDFILE" ] || return 1
@@ -19,12 +21,13 @@ running() {
 }
 case "${1:-}" in
     start)
-        if [ "$ENABLED" != 1 ]; then echo 'heartbeat disabled (offline preparation)'; exit 0; fi
-        [ -n "$HOST" ] || { echo 'HOST must be set explicitly'; exit 1; }
+        if [ "$ENABLED" != 1 ]; then echo 'heartbeat disabled by configuration'; exit 0; fi
+        [ -n "$HOST" ] || { echo 'HOST must be a numeric IPv4 address'; exit 1; }
         [ -x "$BIN" ] || { echo "Missing $BIN"; exit 1; }
         if running; then echo 'heartbeat already running'; exit 0; fi
         "$BIN" --send --host "$HOST" --port "$PORT" \
             --mac-interface "$MAC_INTERFACE" --wg-interface "$WG_INTERFACE" \
+            --rtsp-process "$RTSP_PROCESS" \
             --pidfile "$PIDFILE" --syslog </dev/null >/dev/null 2>&1 &
         sleep 1
         running || { echo 'heartbeat failed to start; check system log'; exit 1; }

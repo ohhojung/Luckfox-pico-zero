@@ -37,5 +37,12 @@ __pycache__/
 *.key
 *.pem
 
-# Default-disabled heartbeat configuration shipped with the source
+# Optional heartbeat service configuration shipped with the source
 !/deliverables/i1_heartbeat_offline/i1_heartbeat/heartbeat.conf
+
+# Generated I2 board deployment packages
+/packages/i2-board-*/
+/packages/i2-board-*.tar.gz
+
+# Local downloads and migration scratch files
+/tmp/

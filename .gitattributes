@@ -4,3 +4,5 @@ S[0-9][0-9]* text eol=lf
 *.conf text eol=lf
 *.cmd text eol=crlf
 *.rknn binary
+
+*.awk text eol=lf

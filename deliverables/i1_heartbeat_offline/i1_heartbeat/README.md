@@ -1,4 +1,4 @@
-# I1 heartbeat - 서버 없이 준비하는 단계
+# I1 heartbeat
 
 기준: 2026-11-04 첨부 보드 작업 문서의 오호종 절(p.2 하단–4).
 2026-11-05 제공된 「ICD — Iteration 1 적용 범위 발췌」(작성일 2026-11-03), 1장 및 3.4절을 기준으로 요청·응답 형식을 맞췄다. 문서의 [TBR] 항목은 실제 서버와 최종 확인이 필요하다.
@@ -36,25 +36,25 @@ chmod +x /tmp/i1-heartbeat
 /tmp/i1-heartbeat --dry-run --count 3
 ```
 
-약 5초 간격으로 3번 출력하고 종료한다. 기본값은 `--dry-run --count 1`이다.
+약 5초 간격으로 3번 출력하고 종료한다. `--dry-run`만 주면 한 번 출력하고 종료한다.
 
 ```text
-START mode=DRY_RUN_NO_NETWORK interval_ms=5000 timeout_ms=3000 mac_interface=eth0 wg_interface=wg1
+START mode=DRY_RUN_NO_NETWORK interval_ms=5000 timeout_ms=3000 mac_interface=wlan0 wg_interface=wg0
 DRY_RUN attempt=1 payload={"mac":"...","status":"online","rtsp_ok":false,"wg_ok":false,"config_version":0}
 ...
 STOP attempts=3
 ```
 
-- MAC은 `/sys/class/net/eth0/address`에서 읽어 **콜론 없는 대문자 12자리**로 만든다. 예: `02:AB:CD:12:EF:34` → `02ABCD12EF34`. 이전에 합의한 소문자 형식은 이번 ICD 정합 요청으로 대체했다. 문서 예시 및 DB CHECK가 대문자를 명시한다. 저장된 보드 시리얼을 MAC으로 대체하지 않는다.
-- `MAC_UNAVAILABLE`이면 eth0 존재/값부터 확인한다. 서버 등록 MAC이 eth0 기준이므로 wlan0로 임의 대체하지 않는다. 다른 인터페이스를 사용하기로 합의한 경우에만 `--mac-interface`를 지정한다.
-- `rtsp_ok`는 좀비 상태가 아닌 `rkipc` 프로세스 존재 여부다. 현재 custom RTSP/NPU 프로그램만 실행 중이면 영상이 나와도 false일 수 있다. 이 I1 지표는 실제 영상 수신 검증이 아니다.
-- `wg_ok`는 wg1의 IFF_UP 플래그다. WireGuard의 operstate가 unknown인 정상 상황을 false로 처리하지 않는다. 서버 핸드셰이크 성공을 의미하지 않는다.
+- 기본 MAC은 `/sys/class/net/wlan0/address`에서 읽어 **콜론 없는 대문자 12자리**로 만든다. 예시는 `02:AB:CD:12:EF:34` → `02ABCD12EF34`다.
+- `MAC_UNAVAILABLE`이면 해당 인터페이스가 생성됐는지 확인한다. 등록에 다른 인터페이스를 사용한 보드는 `--mac-interface`나 서비스 설정의 `MAC_INTERFACE`를 지정한다.
+- `rtsp_ok`는 기본적으로 좀비 상태가 아닌 `cctv-dual-rtsp` 프로세스 존재 여부다. `--rtsp-process rkipc`로 기존 프로그램을 선택할 수 있다. 이 I1 지표는 실제 영상 수신 검증이 아니다.
+- `wg_ok`는 wg0의 IFF_UP 플래그다. WireGuard의 operstate가 unknown인 정상 상황을 false로 처리하지 않는다. 서버 핸드셰이크 성공을 의미하지 않는다.
 - 필드 타입은 mac/status 문자열, rtsp_ok/wg_ok JSON boolean, config_version 정수0으로 구현했다. ICD 발췌본의 필수 필드와 일치한다. 실서버 구현과의 통합 시험은 남아 있다.
 - 두 보드 각각 확인하고 MAC 마지막4자리가 다른지 비교한다. 이 패키지 자체가 두 보드를 검사했다고 간주하지 않는다.
 
-## 구현된 후속 전송 경로 (지금 실행하지 않음)
+## 전송 모드
 
-- `--send`와 명시적인 숫자 IPv4 `--host`가 둘 다 있어야 전송한다. 실제 서버 주소는 소스/설정의 기본값에 넣지 않았다.
+- 옵션 없이 실행하거나 `--send`를 지정하면 기본 `10.0.0.100:3000`으로 전송한다. 다른 서버는 숫자 IPv4 `--host`와 `--port`로 지정할 수 있다. JSON만 확인하려면 `--dry-run`을 사용한다.
 - 경로 `/v1/devices/heartbeat`, 기본 포트3000, 5초 시작 간격. 겹치는 요청 없음.
 - 연결·쓰기·읽기 전체를 libcurl의 CURLOPT_TIMEOUT_MS=3000으로 제한한다. DNS 조회는 없으며 숫자 IPv4만 받는다. `--timeout-ms` 허용 범위100–4000ms.
 - 200의 최상위 비음수 정수 config_version은 로그만 남기며 보드의 config_version=0을 변경하지 않는다. 누락/잘못된 JSON도 로그를 남기고 계속한다.
@@ -63,10 +63,10 @@ STOP attempts=3
 - 전송 모드에서는 fcntl PID 파일 잠금으로 동일 PID 파일의 중복 실행을 막는다. SIGTERM/Ctrl+C로 종료한다. 전송 중에는 libcurl 요청 종료까지 최대 설정 제한시간만큼 기다릴 수 있다.
 - 카메라/WireGuard를 시작·종료하거나 설정을 변경하지 않는다. API 응답에 따른 원격 설정 적용도 하지 않는다.
 
-## 부팅 스크립트 (준비만, 미설치)
+## 부팅 서비스
 
-- `S60heartbeat`와 `heartbeat.conf` 포함. 기본 `ENABLED=0`, `HOST`는 빈 값이다.
-- 나중에 `/usr/bin/i1-heartbeat`, `/etc/heartbeat.conf`, `/etc/init.d/S60heartbeat`에 설치하고 대상 호스트를 명시한 후에만 활성화한다. 현재는 `/etc`에 복사하거나 ENABLED를 바꾸지 않는다.
+- `/usr/bin/i1-heartbeat`와 `/etc/init.d/S60heartbeat`에 설치하면 부팅 시 기본 `10.0.0.100:3000`으로 전송을 시작한다.
+- `/etc/heartbeat.conf`는 선택 사항이다. 파일이 있으면 `HOST`, `PORT`, `MAC_INTERFACE`, `WG_INTERFACE` 설정을 적용한다. 기존 파일에 `ENABLED=0`이 있으면 `ENABLED=1`로 바꿔 서비스를 켠다. `WG_INTERFACE`는 `wg_ok` 확인과 libcurl 송신 인터페이스 바인딩에 사용한다. 기본 wg0가 없으면 다른 인터페이스로 우회하지 않고 다음 주기에 재시도한다.
 - 서비스 로그는 syslog(`i1-heartbeat`)로 보낸다. 보드 syslog 서비스/로그 조회 방식과 init 실행 순서는 실제 환경에서 확인해야 한다.
 - S50wireguard 다음 순서라는 이름만으로 터널 준비를 보장하지 않는다. 늦은 네트워크 준비에도 재시도하는 방식이며 재부팅 실측이 필요하다.
 
@@ -97,7 +97,7 @@ python3 tests/mock_server.py --mode ok
 ./build/native/heartbeat --send --host 127.0.0.1 --port 13000 --count 5 --pidfile /tmp/i1-heartbeat-test.pid
 ```
 
-VM의 eth0 MAC과 상태는 보드의 값이 아니다. eth0가 없는 VM은 실제 VM 인터페이스를 확인해 시험용 `--mac-interface`를 지정한다.
+VM에서 시험할 때는 VM의 실제 인터페이스를 확인해 `--mac-interface`를 지정한다.
 `--mode forbidden`, `--mode slow`(6초 지연), `--mode chunked`로403·timeout·chunked를 시험한다. 서버 중단/재시작 시에도 heartbeat가 계속 재시도하는지는 별도 관찰한다.
 기본 loopback 서버는 외부 보드에서 접속할 수 없다. 보드 연동용 bind/방화벽 변경은 후속 단계에서 실제 네트워크를 확인한 뒤 진행한다.
 
@@ -129,9 +129,17 @@ VM의 eth0 MAC과 상태는 보드의 값이 아니다. eth0가 없는 VM은 실
 - 모의 서버 400/403 오류도 {"error_code":"...","message":"..."} JSON을 사용한다. details는 선택이라 생략한다. 구체적인 heartbeat error_code/message 문자열은 발췌본에 정의되지 않아 BAD_REQUEST/FORBIDDEN은 시험용 값이다.
 - 보드는 HTTP400/403에서 원인 점검 안내를 기록하고 다음 주기에 재시도한다. 서버 오류 본문의 message/details를 해석하거나 그대로 출력하는 기능은 없다. 로그 문구는 ICD 표준이 아니다.
 - mock_server.py는 실제 VPN IP/MAC 등록 DB 검증을 구현하지 않는다. forbidden은403 강제 시험 모드다.
-- rtsp_ok=rkipc 비좀비 프로세스 존재, wg_ok=wg1 UP 판정은 기존 I1 보드 시험 정의로 유지한다. 실제 스트림 수신/최근 핸드셰이크의 보장은 아니다. 발췌본의 '정상 여부'와 실제 서비스 판정 기준은 통합 시 확인한다.
+- rtsp_ok=cctv-dual-rtsp 비좀비 프로세스 존재, wg_ok=wg0 UP 판정을 사용한다. 실제 스트림 수신/최근 핸드셰이크의 보장은 아니다. 발췌본의 '정상 여부'와 실제 서비스 판정 기준은 통합 시 확인한다.
 - 15초 초과 offline 계산과 클라이언트5초 재조회는 서버/클라이언트 담당이며 보드에 추가하지 않는다.
 
 이전 소문자 바이너리로 HTTP200/403/3초timeout/서버중단복구 및 서비스 실행을 확인했다. 이번 대문자 변경 후 C 프로토콜 테스트는 통과했으나 ARM 재빌드/보드 재전송은 필요하다. 서버 등록 MAC도 7424CA5004AF 형식으로 맞춘다. 보드 네트워크/카메라/부팅 설정은 이 변경에서 수정하지 않았다.
 
 검증: Windows MSVC 프로토콜 테스트 통과. `python tests/test_mock_server.py`의 로컬 HTTP200/400/403 및 필수/선택 필드·대문자·자료형 검사 통과. 테스트는127.0.0.1만 사용하고 자식 서버를 종료한다. 실제 보드 VPN 테스트를 대체하지 않는다.
+
+## 2026-11-12 통합 변경
+
+기본 카메라 프로세스를 cctv-dual-rtsp로 변경하고 전송 인터페이스를 wg0에 바인딩했습니다. native 실제 libcurl 클라이언트로 루프백 HTTP 403→200 재시도, JSON 계약, dry-run 무전송, 인터페이스 부재 시 우회 없음 검사를 통과했습니다. 보드 배포·실서버 검증은 `../../i2_board/README.md` 절차로 별도 진행합니다.
+
+## 2026-11-13 모듈화
+
+기능별 소스를 src/로 분리했습니다. 기존 빌드 명령·실행 옵션은 유지합니다. 파일별 역할과 수정 지점은 저장소의 docs/MODULE_GUIDE.md를 참고하세요.

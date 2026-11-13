@@ -1,5 +1,263 @@
 # CCTV 프로젝트 작업 기록
 
+## C드라이브 원본 데이터 삭제 완료 — 2026-11-12
+
+- 사용자 삭제 요청에 따라 D:\Projects\Luckfox와 모든 원본 파일의SHA256·세 Git작업상태를 재검증하고 C:\Users\ohhoj\Downloads\Luckfox의 원본 데이터를 삭제했다. 복사 이후 생긴 Codex Git기록6개도 D에 추가 보존했다. D의 .git·references·미커밋 작업은 유지된다.
+- 앞으로 D:\Projects\Luckfox를 작업 폴더로 연다. 기존 C경로를 연결하는 junction은 만들지 않았다. 사용 중인 프로세스 때문에 C의 빈 루트폴더만 남을 수 있으나 원본 파일 데이터는 모두 정리했다.
+
+
+## D드라이브 복사 검증 완료·경로 전환 대기 — 2026-11-12
+
+- 사용자 요청으로 C:\Users\ohhoj\Downloads\Luckfox 전체를 D:\Projects\Luckfox로 복사했다. references·숨김.git·미커밋 파일 포함1694개 약1.21GiB의 SHA-256 일치 및 세 Git 저장소의HEAD·작업상태·remote 일치를 검증했다.
+- 원본폴더를 백업이름으로 전환하는 단계에서 사용 중인 프로세스 잠금으로 Move-Item이 실패했다. 따라서 C 원본 데이터는 삭제하지 않았고 junction도 만들지 않았다. 현재는 검증된 두 사본이다.
+- 이후 D:\Projects\Luckfox를 작업폴더로 열어 사용한다. C경로를 사용하는 Codex·터미널·다른 프로세스가 해제된 뒤, 양쪽 변경 여부를 재확인하고 원본 정리와 경로 전환을 완료해야 한다. 미검증 상태로 C폴더를 삭제하지 않는다.
+- 검증 로그 및 SHA256목록은 C:\Users\ohhoj\AppData\Local\Temp\luckfox-migration-20261112.log 및 luckfox-migration-20261112-sha256.json에 있다. GitHub 원격·보드 설정 변경은 없다. 이 상태 기록은 두 사본에 동일하게 반영했다.
+
+
+## 팀장 BoardServer 로컬 사본 최신화 — 2026-11-12
+
+- 사용자 요청으로 references/BoardServer-review의 clean main을 origin/main에서 fast-forward했다. 6eb3ad5 → 46703b3, 30파일 변경. 원격에push하거나 우리 소스·보드에 적용하지 않았다.
+- heartbeat 기본 URL 및 S60heartbeat가10.0.0.100으로 갱신됐고 팀장 코드의WG 기본은wg1 유지다. 새 streamer에는 이중H.265·시간OSD·정지감시·상태파일·앱내재초기화 및 기본비활성오디오 경로가 추가됐다. README상 /tmp 시험 단계이며 기본 두 출력18fps다.
+- 팀장 docs/progress/I2.md의 최신 보고는 rkipc에 AE표기12/VTS3750 타이밍을 적용해 재부팅4회 균일18fps, 정지·10fps고정·pingpong0을 관측했다는 내용이다. 이는 팀장 보드의 보고이며 우리 보드 검증이 아니다. 우리 센서mode30 모듈·AE설정과 차이가 있으므로 표기FPS1.5배 관계나 설정을 그대로 적용하지 않는다. 우리20fps 진행 결정 유지.
+
+## I2 두 출력20fps 기준 확정 — 2026-11-12
+
+- 사용자가 우선20fps로 진행하고30fps 방법을 확보하면 추후 수정하도록 결정했다. 이전 메인30/서브20 준비보다 이 결정을 우선한다.
+- 자체 송출기 두 채널 목표·GOP를20으로 설정하고 인코더src/dst 선언도20/20으로 맞췄다. 기존 센서30fps 요청은 약20fps ISP출력을 얻었던 조건이므로 유지하며 SENSOR_REQUEST_FPS로 별도 명명했다. 새로운 설정의 실측FPS는 보드 미검증이며 정확한20fps를 보장하는 변경으로 해석하지 않는다.
+- 30fps 원인 진단은 별도 과제로 보류하고 I2 영상연동·자동시작·heartbeat 검증을 우선한다. 보드 접근·설정 변경 없음.
+
+## I2 운영 준비 1단계 — 2026-11-12
+
+- 사용자 순서대로 진행 요청으로 자체 송출기 메인30/서브20 목표 및 채널별GOP·로그를 분리했다. 공식 ARM uClibc 빌드 통과. 실제ISP입력약20 조건에서 src30/dst20에 따른 서브FPS 감소 가능성이 있어 실측 후 확정한다.
+- S59cctv 시작·정지·상태 스크립트 추가 및 S60heartbeat와 셸 문법 확인. 아직 보드 자동시작 충돌 확인·설치·재부팅 검증은 미수행이다.
+- heartbeat 목적지10.0.0.100 및 wg0 기본값 반영. 현재 서비스의 --rtsp-process cctv-dual-rtsp 선택 구조를 확인했다. Windows 프로토콜 테스트 통과, heartbeat ARM 재빌드는 개발용libcurl 위치 확인 단계로 미완료다. 보드 접근 없음.
+- 배포 상태와 미완료 사항은 deliverables/cctv_dual_rtsp/I2_DEPLOY_STATUS.md. 다음은 사용자가 현재 카메라 프로세스·센서 포맷·부팅 파일을 조회한 후 새 송출기를 수동 시험하는 단계다. 이전ZIP·heartbeat바이너리를 새 변경 적용본으로 취급하지 않는다.
+
+## 사용자 첨부 I2 계획·보드 To-Do와 현재 구현 대조 — 2026-11-11
+
+- 첨부 I2 PDF(6쪽)와 보드 PDF(8쪽)를 텍스트·핵심 표 이미지로 검토했다. 상세 분석은 docs/I1_I2_GAP_REVIEW_2026-11-11.md. 문서 지시는 요구사항으로 분석했으며 설치·외부 공유·보드 명령을 실행하지 않았다. 별도 ICD I2 발췌 원문은 첨부되지 않아 두 PDF에 명시된 범위를 기준으로 한다.
+- 문서의 운영 서버는10.0.0.100:3000, heartbeat5초, 기존JSON 유지다. 현재 소스·S60heartbeat의10.0.0.1 및 wg1 검사 기본값은 실제 보드wg0에 맞춰 수정할 대상으로 분류했다. WG_INTERFACE는 상태 검사뿐이며 전송은 라우팅을 따른다. 별도heartbeat.conf는 현재 선택 사항이고 MAC 기본wlan0도 이미 구현돼 있다. 이번에 코드는 변경하지 않았다.
+- 문서 A-2의 시계 수정은11/9 이미 수행·재부팅UTC 확인했으며 실행 중 영상 서비스와 함께 유지되는지 검증은 남는다. 보드2 실서버HTTP200·DB·웹online/offline는 여전히 미검증이다. BoardServer로 즉시 교체할 요구는 없고 기존i1-heartbeat를 I2에서 사용한다는 문서 방침이다.
+- I2는 RTSP pull→MediaMTX→WHEP/WebRTC 경로다. 보드 목표는/live/0 H.265 1080p30 및/live/1 H.265 540p20. 현재 자체 송출기는 두 채널 목표30을 공유하므로 스트림별FPS 분리, 영구 설치·부팅서비스, 선택 송출기에 맞는rtsp_ok가 필요한 차이다. rkipc INI는 자체 송출기의 설정 파일이 아니며 운영 송출기 선택과 문서 가정 정리가 필요하다.
+- 보드 PDF6·8쪽은 실측약20fps로 이번 통합을 진행·공유하고30fps 확보는 별도 과제로 분리한다. 이것은30fps 달성 판정이 아니다. 문서의 센서mode30 패치 미검증 설명은 오래됐으며 실제CIF30/ISP약20 확인이 최신이다. 기존30fps 문제는 미해결 별도 과제로 유지한다.
+- 보드에WebRTC/push 구현을 추가할 필요는 없다. MediaMTX의 메인상시pull·서브on-demand와WHEP주소 전달은 서버, 화면 재생·재연결은 클라이언트 담당이다. 녹화·NPU·마스킹·설정적용은 이번I2 범위 밖이다. 이번 작업은 분석 문서·기록 작성만 수행했다.
+
+## 다음 확인 대상 — 작은 입력의 AIQ 멀티 통계 경로 선택 — 2026-11-11
+
+- 첫 조사 대상은1944×1097에서 AIQ가 단일 영역 버퍼에 멀티 통계 해석기를 사용하는 선택 조건이다. 매칭된 라이브러리의 해당 분기 및 초기화 경로를 추적하는 것이 필요하며, 기존 SIGSEGV나20fps 실측 반복만으로 새 원인을 얻지는 못한다.
+- 로컬 송출기는 AIQ prepare에0,0,NORMAL을 전달한다. 공식 헤더는 width/height를 내부 확인용 센서 출력 크기로 설명하며, 이 호출만으로 앱이4K를 강제한다고 판단하지 않는다. 공식/로컬 hw.c에서 DT rockchip,unite=1은 ISP_UNITE_ONE을 선택하지만 AIQ 멀티 해석기 선택까지의 전달 경로는 아직 미확인이다.
+- 보드를 다시 켠 뒤 시험 전 상태 확인은 카메라 프로세스, 센서 현재 포맷, 실행 중 DT의rockchip,unite 원시값 조회로 제한한다. 이 조회는 재부팅 후 기준 확인이며 자체로20fps 원인을 확정하는 시험은 아니다. 보드 접근·설정 변경·새 실측은 하지 않았다.
+
+## 해상도를 바꿔도 약20fps가 유지된다는 사용자 지적 재검토 — 2026-11-11
+
+- 사용자 지적에 따라 VI 단독 원본 ISP 로그를 다시 대조했다. 1080p와540p 출력 시험 모두 Input3840×2160, 출력간격49ms다. 출력 크기에 둔감한 공통 경로의 처리 주기·readback 스케줄링을 우선 조사할 근거가 있으며, 단순 출력 해상도에 따른 연산 부족만으로 설명하지 않는다.
+- 입력도 줄인1944×1097 시험은 AIQ 충돌 또는 AIQ 생략 시0프레임으로 끝났다. 따라서 작은 입력에서도20fps로 고정된다는 성공 실측은 아직 없다. 변경되지 않은4K 입력 처리량의 한계와 드라이버 처리 주기 제한은 기존 비교만으로 분리할 수 없다.
+- 약20.2fps의 반복 관측은 안정된 병목을 보여주지만 코드에20fps 상수가 있거나 의도적인 제한이 있다는 증거는 아니다. 공통 처리 주기·프레임 선택·대기 경로 검토와 작은 입력 경로의 정상화가 다음 판단에 필요한 사항이다. 새 보드 시험은 하지 않았다.
+
+## 20fps 제한 원인 및 다음 해결 우선순위 검토 — 2026-11-11
+
+- 기존 실측을 종합하면 30fps 요청 후 센서/CIF는 33ms·30fps, ISP 두 출력은 49ms, VENC는 약20.2fps다. 10월 2일 VENC/RTSP 없는 VI 단독 1080p 및 540p도 약20fps였다. 제한 구간은 ISP/VI 출력 경로로 강하게 좁혀지며 Wi-Fi/VLC/H.265 이중 인코딩을 현재 제한의 우선 원인으로 보지 않는다.
+- 1080p/540p는 출력 크기이며 ISP 입력은 3840×2160으로 유지됐다. 가장 유력한 후보는 이 4K 입력의 unite 분할·readback 처리, 메모리 이동 및 스케줄링이다. 로컬 드라이버에 해당 모드의 재처리 분기는 있으나 `X2`/`force to 2 readback` 문구만으로 정확한20fps 산식이나 하드웨어 절대 상한을 도출할 수 없다. 순수 연산량·메모리 대역폭·드라이버 대기를 아직 분리하지 못했다.
+- 제조사 공식 위키 https://wiki.luckfox.com/Luckfox-Pico-Zero/ 의 ISP 5M@30fps와 제품 페이지 https://www.luckfox.com/Luckfox-Pico-Zero 의 ISP 8M@15fps를 재확인했다. 4K 입력30fps가 보장된 사양은 아니며, 실제 약20fps 관측을 제품표의15fps로 덮어쓰지 않는다.
+- 1944×1097 작은 입력의 AIQ 통계 버퍼 범위 초과는 별도 확인된 장애다. 4K의20fps를 직접 설명하는 오류는 아니지만 입력 부하를 낮춰30fps를 검증하는 경로를 막는다. 해결 순서는 단일 영역 통계와 일치하는 AIQ/드라이버 설정 또는 호환 빌드를 확보한 뒤 작은 입력에서 실제 CIF→ISP→VENC FPS를 측정하는 것이다. 이 변경만으로30fps가 보장되지는 않는다.
+- 자동노출에 따른15fps는 실행 중 고정30fps 요청으로 센서/CIF30까지 올렸으므로 현재 잔여20fps 제한과 구분한다. VI 버퍼2→4, VI FPS -1/-1, 출력 해상도 축소 및 TNR 처리 bypass 시험은 개선이 없었다. BAY3D 전체 블록 비활성화는 검증되지 않았다. AIQ 생략 시험은 params 대기 경고와0프레임으로 종료되어 정상 송출 대안이 되지 못했다.
+- 이번 작업은 기존 로그·로컬 소스·공식 사양 재검토다. 새 보드 시험이나 설정 변경은 없으며30fps 달성은 여전히 미확인이다.
+
+## 작은 센서 모드 AIQ 없는 첫 송출 시험 — 2026-11-11
+
+- 사용자 `-N` 로그에서 AIQ 비활성, RAW 1944×1096, 두 RTSP READY를 확인했다. 이어 `/live/1`이 5초간 VENC 프레임을 받지 못해 `NO_FRAME`으로 종료·정리했다. 두 채널 실측 FPS가 기록되지 않았고 `/live/0`에 프레임이 들어왔는지도 로그로 확정할 수 없다.
+- 다음은 같은 시험이 실행 중일 때 CIF·ISP 출력 카운터를 함께 수집해 프레임이 끊기는 구간을 확인하는 것이다.
+- 사용자 수동 순차 실행에서 `Done(1)`과 같은 540p `NO_FRAME`이 재현됐다. CIF는 시작·출력 정보 없이 클록만 표시했고 ISP 출력 필터는 비어 있었다. 활성 구간의 통계를 확보하지 못해 송출기 시작과 3초 후 조회를 같은 셸 줄로 실행하도록 안내했다.
+- 시작 3초 후 동시 조회 성공. ISP는 1920×1080 12비트 입력 모드, 인터럽트 0, readback 프레임 0, mainpath/selfpath 모두 프레임 0·간격 0ms를 표시했다. CIF는 클록만 표시해 센서 스트림 시작 여부 미확인이다. 드라이버 소스에서 ISP 시작 시 3A 구독 여부에 따른 파라미터 대기는 확인했으나 현 시험의 대기·실패 원인은 단정할 수 없다. 다음은 IMX415·CSI·CIF·ISP 커널 시작 로그 조회다.
+- 사용자 커널 로그에서 두 `-N` 시도 모두 ISP 시작 약 1초 뒤 `waiting on params stream on event timeout` 확인. 첨부 범위에 IMX415 `s_stream: 1` 기록은 없다. 로컬 `rkisp_start_3a_run`은 params STREAMON과 첫 파라미터를 기다리며, 타임아웃 자체는 경고 후 시작 경로로 복귀한다. 따라서 이 구성에서는 `-N`으로 두 스트림의 FPS를 측정할 수 없었으며 센서/ISP 시작의 구체적인 정지 원인은 미확정이다. 다음은 단일 영역 통계와 맞는 AIQ 경로를 찾는 것이다.
+
+## 작은 센서 모드 AIQ 없는 송출 대조 준비 — 2026-11-11
+
+- 매칭된 라이브러리에서 `RkAiqCore::analyze`의 통계 처리 경로가 AE/AWB/AF 뒤에 `handleAdehazeStats`를 호출하는 것을 확인했다. 그 호출과 핸들러에서 알고리즘 활성 여부로 분기하는 코드는 확인되지 않았다. Dehaze 제어만으로 충돌 회피를 가정하지 않았다.
+- 두 H.265 스트림에 `-N` 시험 옵션을 추가했다. AIQ 초기화를 생략하고 기존 두 VI/VENC 및 RTSP를 시작한다. 센서 1944×1097/0x3010에서 `venc_fps` 및 CIF를 확인하며 AIQ 없는 자동 노출·화질은 시험 대상 밖이다. 공식 ARM uClibc 빌드 통과, 보드에서 영상 취득과 실제 FPS는 미검증이다.
+
+## ISP32 단일·분할 통계 버퍼 크기 대조 준비 — 2026-11-11
+
+- 공식 ARM 컴파일러로 SDK 헤더를 컴파일해 ISP32 통계 구조체 크기 13036바이트 및 `frame_id` 오프셋 13028(`0x32e4`), ISP32 Lite는 각각 3788 및 3780바이트임을 확인했다. 로컬 드라이버는 ISP32 구조체를 16바이트 정렬한 13040바이트에 `unite_div`를 곱한다. 로컬 소스의 ISP32 입력 면적 분기에 따르면 1920×1080은 DIV1, 3840×2160은 DIV2에 해당한다. 보드의 실제 버퍼 길이는 미측정이다.
+- 확인된 AIQ 명령 흐름은 V4L2 버퍼 길이의 절반을 첫 통계 포인터에 더해 두 번째 포인터를 만들고 각 포인터의 `frame_id`를 읽는다. 작은 모드에서 13040바이트 한 영역만 제공되는 경우 두 번째 읽기의 시작 오프셋은 19548바이트로 길이를 넘는다. 동일 SIGSEGV의 `r4-r5`에서 길이의 절반을 얻어 확인하도록 안내했다.
+- 사용자 GDB 재현에서 같은 PC `0xa6d558fe`, `r3=0x32e4`, `r4-r5=6520`, 두 배 13040바이트를 확인했다. 충돌한 두 번째 `frame_id` 읽기는 버퍼 시작에서 19548바이트로 보고된 길이를 넘는다. 작은 센서 모드의 안정화가 먼저 필요하고, 안정화 뒤 두 출력의 30fps 달성 여부를 실측해야 한다.
+
+## 1944×1097 AIQ 충돌 함수 확인 — 2026-11-11
+
+- 사용자 GDB에서 `librkaiq.so`의 런타임 `.text` 범위 `0xa6ce7a80–0xa6de9370` 확보. SHA-256 대조가 끝난 SDK ELF의 `.text` 주소 `0x1ba80`을 빼 load bias `0xa6ccc000`을 구했고, 라이브러리 내부 프레임 9개를 모두 심볼에 연결했다. `xc:isp_3a_stats`에서 `RkAiqCore::handleAdehazeStats` → `RkAiqResourceTranslatorV32::translateAdehazeStats` → `translateMultiAdehazeStats` 경로다.
+- ARM 디스어셈블리에서 충돌 PC `0xa6d558fe`는 ELF `0x898fe`(함수 시작+126)이며, 두 번째 통계 영역에서 값을 읽는 명령이다. 12비트 작은 입력에서 통계 버퍼 구성과 AIQ의 멀티 통계 처리 가정이 어긋나는지 확인할 근거를 얻었다. 실제 버퍼 크기·레이아웃과 근본 원인은 아직 미확인이다.
+
+## 보드 AIQ와 공식 SDK 심볼 사본 일치 확인 — 2026-11-11
+
+- 공식 ARM `strip --strip-all` 및 `--strip-unneeded`로 로컬 SDK `librkaiq.so`의 임시 사본을 생성했다. 두 결과 모두 1683192바이트, SHA-256 `3f8f084df73ce82871012bb1c8e4f06cf04731994eebc5e7d75d0b7822b4d48e`로 사용자 보드 파일과 일치한다. 보드 파일을 다시 복사하지 않고 로컬 원본의 심볼을 사용할 수 있다.
+- 다음은 1944×1097 GDB 충돌 실행의 `info files`에서 `/oem/usr/lib/librkaiq.so`에 해당하는 `.text` 시작 주소를 얻고, 같은 실행의 백트레이스를 로컬 심볼에 대조하는 것이다. 이번에는 보드 명령을 실행하지 않았다.
+- 사용자 V4L2 조회에서 1944×1097/0x3010을 재확인했다. GDB 출력을 `grep`으로 필터링한 실행은 빈 결과라 바이너리 존재, GDB 시작 여부와 실제 충돌 여부는 미확인이다. 다음은 `/tmp` 바이너리 존재를 확인하고 필터 없는 로그를 수집한다. PC의 ARM TNR Lite 바이너리는 존재를 확인했다.
+- 후속 조회에서 `/bin/gdb`는 존재하지만 `/tmp/cctv-dual-rtsp-tnr-lite`가 없었다. 필터 없는 GDB 로그도 `No executable file specified`를 확인했다. PC의 기존 ARM 바이너리를 같은 경로로 다시 전송한 뒤 1944×1097 모드에서 재현하도록 안내했다.
+- 재전송 후 GDB가 실행 파일을 시작했고, 센서 포맷은 1944×1097/0x3010으로 조회됐다. 송출기는 TCP 554의 `Address already in use`로 AIQ 초기화 전에 종료 코드 1을 반환했다. 이번 실행에는 AIQ 매핑이나 SIGSEGV 스택이 없다. 포트 점유 프로세스는 미확인이다.
+- 후속 시험에서도 TCP 554 충돌이 반복됐고 사용자 `/proc` 조회로 수신 소켓 inode 7997을 `/proc/673/fd/51`에서 확인했다. PID 673의 실행 파일은 아직 조회되지 않았다. 기존 카메라 앱으로 확인된 경우 종료하고, 센서 포맷을 다시 설정한 뒤 GDB를 실행한다.
+
+## 영상 전용 1944×1097 모드에서 동일 AIQ 충돌 스택 확인 — 2026-11-10
+
+- GDB 재현에서 센서 pad 0 `1944×1097/0x3010`, VI 로그 RAW 1944×1096, 두 RTSP READY 이후 `xc:isp_3a_stats`가 `/oem/usr/lib/librkaiq.so`의 `0xa6d558fe`에서 SIGSEGV. 9월 30일 NPU 포함 시험의 `librkaiq.so` 프레임 #0~#8 주소 9개가 모두 일치한다. 이 재현은 NPU 및 실행 중 30fps 요청 없이 발생했다. GDB의 `??`로 구체적인 함수명·원인은 아직 미확인이다.
+- 로컬 공식 RKMPI uClibc `librkaiq.so`는 `.symtab`을 포함한다(크기 2682768바이트, SHA-256 `ff4cb39532e145c2317ac426038a2d57c629940a91d0d8812014e12c9a3c4dc9`). 다음은 보드 파일과 동일 빌드인지 대조한 뒤 실제 로드 주소를 기준으로 함수명을 확인하는 것이다. 보드 복원 여부는 미확인이다.
+- 보드 `/oem/usr/lib/librkaiq.so`는 1683192바이트, SHA-256 `3f8f084df73ce82871012bb1c8e4f06cf04731994eebc5e7d75d0b7822b4d48e`로 SDK 파일 전체와 다르다. 심볼 제거 여부와 실제 빌드 차이를 구분하기 위해 사용자에게 보드 라이브러리를 읽기 전용으로 가져오도록 안내했다. SDK `.text`는 가상 주소 `0x1ba80`, 크기 1054960, SHA-256 `52b718a6d3ef60d3500785774d58cf82f4e356ba4fdcec58d51938f32730ad1c`다.
+
+## 1944×1097 모드에서 영상 전용 송출기 SIGSEGV 재현 — 2026-11-10
+
+- 사용자 로그에서 센서 pad 0 `1944×1097/0x3010 SGBRG12`, 기본 IMX415 IQ, AIQ init/prepare/start, 두 VI stream-on 및 두 RTSP `READY`를 확인했다. 첫 `STREAM` 또는 실행 중 AIQ 30fps 요청이 나오기 전에 `Segmentation fault (core dumped)`로 종료했다.
+- 이번 송출기는 NPU를 초기화하지 않는다. 이전 NPU 포함 시험의 SIGSEGV와 유사하나 이번 실행의 fault 스레드·라이브러리·호출 위치는 아직 미확인이다. 이 시험에서 작은 모드 FPS는 측정되지 않았다. 복원 출력 미제공이며, 다음은 최근 dmesg 수집과 기존 3864×2192/0x300e 복원 확인이다.
+- 후속 `dmesg | tail -n 40`에서 센서 `s_stream: 0. 1944x1097, hdr: 0, bpp: 12` 및 CSI·CIF 종료를 확인했다. 첨부 범위에 사용자 공간 fault 위치는 없다. 이후 `wg0` 핸드셰이크 재시도 로그는 별도로 관측됐다. 이번 실행의 코어 파일 저장 여부와 복원 여부는 미확인이다.
+- 사용자 조회에서 `core_pattern`은 `| /usr/bin/coredump2sdcard.sh %p %e`, `/tmp/core*`는 없음, GDB는 `/bin/gdb`로 확인했다. 스크립트의 실제 저장 위치와 코어 보존 여부는 미확인이다. 코어가 있으면 동일 바이너리와 GDB로 읽고, 없으면 작은 모드에서 송출기를 GDB로 한 번 실행해 현재 fault 스레드와 스택을 수집한다.
+- 후속 스크립트는 `/mnt/sdcard/core-<PID>-<실행이름>`으로 표준입력을 저장한다. 사용자가 `$1`·`$2`를 직접 셸에 입력해 `core--`를 조회했으며 실제 파일 목록은 미조회다. GDB 재실행의 RAW 입력은 폭 3864였으며 30fps 요청 후 양쪽 VENC 약 20fps, RTSP TX 오류 0, Ctrl+C의 SIGINT만 확인했다. 이 스택은 1944×1097 SIGSEGV의 백트레이스가 아니다.
+- 사용자 `ls -lht /mnt/sdcard/core-*-cctv-dual-rtsp*`에서 일치하는 코어 파일이 없었다. 다음은 카메라 앱 종료 후 1944×1097/0x3010 설정과 조회를 같은 셸에서 수행하고 GDB로 직접 재현하는 것이다.
+
+## 1944×1097 IMX415 입력 대조 준비 — 2026-11-10
+
+- 과거 1944×1097/0x3010 시험 로그를 재확인했다. AIQ init/prepare/start와 VI stream-on 이후 `xc:isp_3a_stats`가 `librkaiq.so` 내부에서 SIGSEGV를 냈으며 그 시험 앱은 NPU를 초기화했다. 로컬 IMX415 드라이버는 이 센서 모드에서 1920×1080 crop bounds를 제공한다.
+- 이번 대조는 TNR 우회 IQ 대신 기본 IQ, NPU 없는 현재 이중 송출기 및 동일 출력 1080p/540p를 사용한다. 카메라 앱을 중지한 뒤 `/dev/v4l-subdev2` pad 0의 1944×1097/0x3010 포맷을 임시 설정하고, 실행 중 CIF 실제 입력 및 두 출력 FPS를 확인한다. 종료 후 3864×2192/0x300e 복원 절차를 안내했다. 보드 명령 미실행, 작은 입력 모드의 정상 시작 및 FPS 미확인.
+
+## 임시 IQ의 BAY3D bypass 적용 및 이중 송출 실측 — 2026-11-10
+
+- 보드 로그에서 `/tmp/iq-tnr-off/`의 IMX415 JSON 로드 성공. 기존 IQ 관측의 `BAY3D ON(0x2001 ...) bypass:0`과 달리 시험 IQ에서 `ON(0x2003 ...) bypass:1`을 확인했다. 로컬 ISP procfs 소스에서 enable과 bypass는 별도 비트다. 즉, 처리 우회는 적용됐으나 블록 enable은 유지됐다.
+- 시험 중 AIQ 보고 30fps/2250줄, ISP read 33ms, 양쪽 ISP 출력 49ms로 관측. 7개 구간 VENC 1080p 20.16~20.38fps, 540p 20.14~20.38fps 및 RTSP TX 오류 0. TNR 처리 우회로 이 조건의 20fps 병목은 개선되지 않았다. 블록 전체 비활성화나 하드웨어 최대 성능까지 검증한 것은 아니다.
+
+## Bayer TNR 전용 조회 mode=0 및 임시 IQ 대조 준비 — 2026-11-10
+
+- 사용자 `-F 30 -T` 로그에서 AIQ 30fps/2250줄 및 VENC 20.17/20.37fps, `ISP_HW stage=before_tnr_request BAY3D ON`을 확인했다. V23 Lite 조회 후 `mode=0`(SDK의 INVALID)으로 보호 분기가 종료했으며 SetAttrib 호출이나 실제 TNR 전환은 없었다. 실행에서 읽은 IQ 파일 경로는 `/etc/iqfiles/imx415_CMK-OT2022-PX1_IR0147-36IRC-8M-F20.json`이다.
+- 보드에서 가져온 IQ JSON을 입력으로 사용하는 `prepare_tnr_off_iq.py`를 추가했다. V23_LITE의 `TuningPara.enable` 한 값만 1→0으로 바꾼 별도 복사본을 만들며 기존 파일은 보호한다. 로컬 IMX415 IQ 백업에서 JSON 의미상 변경 한 곳 및 재실행 시 덮어쓰기 방지 검증 완료. 실제 보드에서 `-a`로 복사본 로딩, `BAY3D OFF`, VENC FPS는 미검증이다.
+
+## Bayer TNR V23 Lite 전용 대조 및 하드웨어 상태 로깅 — 2026-11-10
+
+- IMX415 IQ 백업의 `bayertnr_v23.Version=V23_LITE`와 공식 SDK 헤더를 확인했다. 기존 `-F 30 -T`의 공통 TNR 제어를 V23 Lite GetAttrib/SetAttrib으로 교체했다. 자동 모드 속성을 읽고 다른 값을 보존한 채 `stAuto.st3DParams.enable`만 false로 비동기 요청한다. `/proc/rkisp-unite0`의 `BAY3D` 줄을 같은 실행에서 요청 직전과 이후에 `ISP_HW`로 남긴다.
+- 공식 ARM uClibc 빌드와 전용 API 심볼 링크 검증 통과. 실행 중인 보드의 라이브러리에서 함수 동작 및 BAY3D ON→OFF 전환·FPS 변화는 미검증이다.
+
+## TNR 공통 제어 호출 후에도 VENC 약 20fps — 2026-11-10
+
+- 사용자 `-F 30 -T` 콘솔에서 30fps 요청 후 AIQ 보고 30fps/2250줄, TNR 요청 전 VENC 20.18/19.98fps, `ISP_TNR enabled_before=0 requested=off` 및 후속 세 측정 구간을 확인했다. 요청 후 VENC는 1080p 20.16~20.39fps, 540p 20.19~20.36fps, RTSP 송신 오류 0이었다.
+- 앞서 제공된 `/proc` 스냅샷은 `BAY3D ON`, `bypass:0`였고 이번 콘솔 캡처에는 같은 실행 중의 BAY3D 스냅샷이 없다. 공통 AIQ 제어의 반환 성공/조회 0은 하드웨어 비활성화 또는 실제 ON→OFF 전환 증거가 아니다. 같은 옵션을 반복하는 대신 BAY3D의 실제 상태 전환을 검증할 수 있는 전용 제어나 IQ 임시 설정을 다음 후보로 검토한다.
+
+## TNR 대조 중 ISP 스냅샷 수신 — 2026-11-10
+
+- 사용자 제공 스냅샷에서 ISP 두 출력이 모두 49ms(약 20fps), `BAY3D ON`, `bypass:0`이었다. 이 스냅샷에는 TNR 비활성화가 나타나지 않는다. 해당 스냅샷이 `ISP_TNR` 및 `after_tnr_request` 이후인지, AIQ 함수 반환 로그 및 같은 시점의 CIF 수신 FPS는 미제공이다. ISP Read의 66ms 한 표본만으로 센서 15fps 전환을 확정하지 않는다.
+- 후속 스냅샷은 ISP read 33ms, mainpath·selfpath 49ms, `BAY3D ON`, `bypass:0`이었다. `ISP_TNR` 및 `AIQ_TIMING` 콘솔 로그가 아직 없어 비활성화 요청 실행 또는 ISP 반영 실패를 구분할 수 없다.
+
+## ISP TNR 단독 대조 옵션 준비 — 2026-11-10
+
+- 로컬 ISP 드라이버에서 `ISP_UNITE_ONE` 조건이 readback 처리 횟수에 영향을 주는 것을 확인했다. 이 동작이 출력 20fps의 직접 원인인지는 실측으로 분리되지 않았다. 이미 시행한 VI 버퍼·출력 해상도 시험 대신 4K 입력과 두 H.265 스트림을 유지하고 TNR만 변경하는 대조를 준비했다.
+- `cctv-dual-rtsp -F 30 -T`는 기존 30fps 요청 후 첫 양쪽 VENC 측정 구간을 기록하고, 공식 AIQ `RK_MODULE_TNR` 제어로 TNR 비활성화를 한 번 요청한다. `ISP_TNR` 및 `AIQ_TIMING stage=after_tnr_request`로 구간을 구분하고 `/proc/rkisp-unite0`의 `BAY3D`로 적용을 확인한다. 기본 실행과 `-F 30`의 기존 흐름에서는 TNR을 변경하지 않는다.
+- 공식 SDK ARM uClibc 교차 빌드 및 TNR 제어 함수 링크 확인. 보드 적용·FPS 비교는 미수행이다.
+
+## AIQ 30fps 요청 후 CIF 30fps·ISP 출력 약 20fps 확인 — 2026-11-10
+
+- 사용자 `/proc` 첨부에서 첫 CIF는 66ms/15fps, 뒤 CIF는 33ms/30fps였다. 두 번째 스냅샷에서 ISP read는 33ms, mainpath 1080p와 selfpath 540p는 각각 49ms(약 20fps), 지연 표시는 168ms였다. CSI 오류와 ISP 인터럽트 오류는 0이고 ISP read `frameloss`는 3, 두 출력 `frameloss`는 0이었다.
+- CIF에서 실제 30fps를 받고도 ISP 두 출력은 약 20fps로 관측됐다. 앞선 VENC 실측과 일치하며, 과거 인코더·RTSP를 제외한 VI 단독 시험에서도 같은 구간이 관측됐다. 3840×2160 입력의 ISP `unite X2`·readback 경로를 우선 조사하되 구체적인 원인이나 하드웨어 상한은 미확정이다.
+
+## 실행 중 AIQ 30fps 요청 후 이중 스트림 약 20fps 실측 — 2026-11-10
+
+- 사용자 `/tmp/cctv-dual-rtsp-livefps -F 30` 로그에서 요청 전 AIQ 보고 15fps/4500줄, 두 VENC 14.59fps 확인. `AIQ_FPS stage=running requested=30` 후 네 구간 모두 AIQ 보고 30fps/2250줄, VENC `/live/0` 20.18~20.36fps 및 `/live/1` 20.18~20.38fps. 전 구간 `rtsp_tx_errors=0`, Ctrl+C까지 지속 후 자원 정리를 확인했다.
+- 이전 시작 전 요청에서 관측된 5초 무프레임은 이번 실행에서 재현되지 않았다. AIQ 보고 30fps와 실제 CIF 속도는 구분한다. 이번 실행 중 CIF·ISP 스냅샷 및 VLC 실측은 미제공이므로, 다음은 `AIQ_FPS stage=running` 이후 두 `/proc` 통계를 함께 수집해 구간을 좁힌다.
+
+## AIQ 30fps 시작 시 프레임 미수신 및 적용 시점 변경 — 2026-11-10
+
+- 사용자 로그에서 `-F 30`의 `before_vi` 요청 및 두 `READY`를 확인했다. 이후 `/live/0`의 VENC에서 5초 동안 프레임을 받지 못해 `NO_FRAME`(`0xa004800e`)으로 정리 종료했다. `STREAM`과 실행 중 AIQ 재요청 로그는 없었고, CIF/ISP 및 센서 제어값은 이번 실패 실행에서 미조회다. 이 결과만으로 프레임이 멈춘 내부 구간은 특정할 수 없다.
+- 수정본은 기존 AIQ 정책으로 시작해 두 채널의 첫 5초 실측을 남긴 뒤 한 번만 고정 30fps를 요청한다. ARM uClibc 교차 빌드와 소스 ZIP 검증 통과. 이 변경의 보드 실측은 아직 미수행이다.
+
+## 이중 RTSP의 AIQ 30fps 비교 옵션 추가 — 2026-11-10
+
+- `deliverables/cctv_dual_rtsp`에 선택 옵션 `-F 30`을 추가했다. AIQ의 AE 고정 프레임률을 VI 시작 전에 요청하고, 두 채널의 프레임 취득이 확인된 뒤 한 번 재요청한다. `AIQ_TIMING`에 AIQ 보고 FPS·프레임 길이, `STREAM`에 실측 VENC FPS가 나온다. 옵션 생략 시 기존 AE 정책이다.
+- 공식 SDK ARM uClibc 교차 빌드 및 AE 함수 링크 확인. 보드 배포 및 `-F 30` 실측은 아직 미수행이다. 동일 조명에서 CIF의 실제 FPS와 두 채널의 VENC FPS를 각각 확인한다.
+
+## 이중 RTSP 실행 중 IMX415 프레임 길이 확인 — 2026-11-10
+
+- 사용자 조회에서 `/dev/v4l-subdev2`의 `exposure=3375`, `vertical_blanking=2308`, `horizontal_blanking=4936`, `pixel_rate=356800000` 확인. 현재 RAW 높이 2192와 VBLANK를 합한 VTS는 4500줄로, 과거 30fps 센서 시험의 2250줄(VBLANK 58)의 두 배다. 현재 CIF 66ms/15fps와 부합한다.
+- 현재 노출 3375줄은 2250줄 프레임에 들어가지 않는다. 조도·자동노출 정책·모드 초기화 중 VTS 4500을 정한 원인은 미확인이다. 밝은 장면에서 읽기 전용으로 다시 확인하고, 필요하면 이전 시험과 같은 AIQ 고정 30fps 요청으로 대조한다. 과거 고정 요청은 CIF 30fps를 확인했으나 ISP/VI 출력은 약 20fps였다.
+
+## 이중 RTSP 실행 중 CIF부터 약 15fps 확인 — 2026-11-10
+
+- 사용자 첨부의 두 스냅샷에서 IMX415의 입력 모드 표시는 SGBRG10 3864×2192@30, CIF 출력은 3840×2160, `rate:66 ms`, `fps:15`였다. CSI overflow·bandwidth lack·size error 및 전체 오류는 모두 0이다. CIF와 ISP 양쪽 출력 카운터가 각각 248씩 증가했으나 스냅샷 사이의 정확한 실경과는 알 수 없어 FPS 산출에 쓰지 않았다.
+- ISP read 및 1080p mainpath·540p selfpath가 모두 66ms, `frameloss:0`, ISP `ErrCnt:0`이었다. 앞선 VENC 약 15fps와 일치한다. 관측 가능한 프레임률 저하는 이미 CIF에서 나타났고, 센서의 실제 VBLANK/VTS 및 AE 적용 상태는 이번 로그에 없다. 다음은 송출 중 `/dev/v4l-subdev2`의 `vertical_blanking`, `horizontal_blanking`, `pixel_rate`, `exposure`를 읽기 전용 조회한다.
+
+## H.265 이중 RTSP 보드 실측 — 2026-11-10
+
+- 사용자 첨부 실행 로그에서 `/tmp/cctv-dual-rtsp`의 RTSP 554 리스너, IMX415/AIQ 시작, mainpath `/dev/video11`의 `/live/0` 1920×1080과 selfpath `/dev/video12`의 `/live/1` 960×540 준비 및 각 세션의 HEVC VPS/SPS/PPS 인식을 확인했다. 센서 RAW는 3864×2192였다.
+- 약 25초 동안 5개 측정 구간에서 `/live/0`은 14.59~15.19fps, `/live/1`은 14.59~15.19fps였다. 각 구간 `rtsp_tx_errors=0`, Ctrl+C 후 채널 및 세션 정리 확인. `target_fps=30`은 인코더 설정값이고 두 스트림의 실제 VENC 취득은 약 15fps다. VLC 접속·동시 재생 출력은 제공되지 않았다.
+- 두 채널에서 비슷한 속도가 관측되어 공통 센서/ISP 경로를 우선 점검하되 원인은 미확정이다. 다음 시험은 송출 중 별도 셸에서 `/proc/rkcif-mipi-lvds`와 `/proc/rkisp-unite0`을 5초 간격으로 두 번 조회하고, 같은 시간의 두 VENC 로그와 비교한다.
+
+## H.265 이중 RTSP 전용 송출기 구현 — 2026-11-10
+
+- SRS WC-F-001~004의 1080p, H.265, 고·저화질 동시 송출, 30fps 요구를 확인했다. ICD I1 발췌에는 heartbeat의 `rtsp_ok`가 있으며 RTSP 경로와 저화질 해상도는 이번 구현에서 정했다.
+- 별도 소스 `deliverables/cctv_dual_rtsp`에서 IMX415/AIQ 하나와 VI→VENC 두 채널을 연결한다. RTSP 554번 포트의 `/live/0`은 1920×1080/4096 Kbps, `/live/1`은 960×540/1024 Kbps이며 둘 다 HEVC CBR, 인코더 목표 30fps다. 채널별 VENC 취득 FPS와 RTSP 송신 오류를 5초마다 로그로 남긴다. 사람 인식 및 이벤트·녹화·heartbeat 연동은 이번 범위 밖이다.
+- 공식 RKMPI kernel-5.10.160 헤더·라이브러리와 Luckfox uClibc 도구 체인으로 셸 문법 검사 및 ARM 교차 빌드·링크가 통과했다. ELF32 ARM 및 `/lib/ld-uClibc.so.0` 인터프리터를 확인했다. 보드 실행, 핫스팟/Windows VLC 동시 재생, 실제 30fps 유지 여부는 미검증이다. 기존 heartbeat의 `rtsp_ok`는 `rkipc` 프로세스를 확인하므로 새 실행 파일의 상태 판정에 사용할 수 없다.
+
+## 팀 1080p30 스트리밍 이슈 공유 — 2026-11-10
+
+- 사용자 전달 메시지에서 팀원은 540 해상도에서 프레임이 잘 나오지만 1080p30에서 문제가 있어 측정 중이라고 보고했다. 실행 프로그램, 입력 모드, 코덱·비트레이트, 수신 경로 및 실측 FPS는 미공유다.
+- 우리 보드의 과거 1080p H.264 4096 Kbps 단일 스트림 시험에서는 30fps 요청 후에도 AIQ 콜백 및 인코더 프레임 취득이 약 20fps였다. 이번 팀원 시험과 조건이 같은지와 원인 공유 여부는 미확인이다.
+
+## 노트북 없이 팀 원격 테스트하는 방식 검토 — 2026-11-10
+
+- [Luckfox Pico Zero 로그인 문서](https://wiki.luckfox.com/Luckfox-Pico-Zero/Login/)는 SSH를 지원 접속 방식으로 안내한다. 공개 SDK의 [Buildroot 설정](https://github.com/LuckfoxTECH/luckfox-pico/blob/main/sysdrv/tools/board/buildroot/luckfox_pico_defconfig)은 OpenSSH를 포함한다. Windows `adb devices -l`은 로컬 ADB 데몬 시작 실패로 장치 목록을 얻지 못했다. 현재 이미지의 SSH 리스너와 adbd TCP·인증·권한은 실기 미확인이다.
+- 운영안 후보는 보드가 노트북과 독립적인 Wi-Fi/핫스팟에서 기존 AWS WireGuard 서버에 연결하고, 팀원별 VPN 피어와 SSH 공개키를 발급하는 구성이다. 보드의 관리 접속은 VPN에서만 허용하고, 테스트 계정은 비관리자이며 상태 조회 명령만 허용하는 SSH 강제 명령으로 제한한다. 팀원에서 보드로 직접 연결하려면 서버 피어 간 전달 정책 및 보드의 팀원 VPN 주소에 대한 AllowedIPs/복귀 경로를 설정해야 한다. 11월 9일 관측된 보드 peer의 AllowedIPs는 서버 `10.0.0.100/32`만 포함했다. NAT 뒤에서 수신이 필요하면 [WireGuard keepalive](https://www.wireguard.com/quickstart/) 설정을 확인한다.
+- [ADB TCP](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md)는 현재 이미지가 지원할 경우 개발용 접속 후보지만, 셸 이외 파일 전송도 제공하므로 테스트 명령만 허용해야 하는 팀 공유에는 제한형 SSH가 적합하다. 공인 포트 공개는 운영안에 포함하지 않는다.
+- WireGuard 없이도 같은 Wi-Fi에서 단말 간 통신이 허용되면 보드의 현재 `wlan0` IPv4와 TCP 5555로 ADB 접속을 시험할 수 있다. 외부망에서는 보드가 공인 서버에 먼저 SSH 역방향 터널을 열고 팀원이 SSH로 중계하는 구성도 가능하다. 두 경로 모두 이 보드에서 실기 미검증이다.
+- 어댑터 단독 부팅 요청 후 Luckfox 공개 SDK 확인. `S50usbdevice`는 ADB 활성 조건에서 FunctionFS를 준비하고 `/usr/bin/adbd`를 시작한다. SDK의 `0015-make-adb-tcp-function-default-enbale.patch`는 USB 초기화 경로에서 기본 TCP 리스너도 연다. RSA 인증은 별도 패치에서 `ADBD_RSA_AUTH_ENABLE` 환경변수로 제어한다. 현재 보드 이미지에 같은 스크립트와 패치가 들어 있는지, 데이터 케이블 없이 5555가 열리는지는 미확인. 1차 시험은 상시 Wi-Fi에서 어댑터만 꽂아 부팅한 뒤 다른 단말이 현재 DHCP 주소의 5555에 `adb connect` 및 `adb shell uptime`을 실행하는 것이다. 보드 설정 변경 미수행.
+- AOSP의 TCP ADB 서버는 한 포트에서 여러 연결을 받아 각각의 전송으로 등록한다. Luckfox 공개 SDK의 RSA 패치에서 처음 제시된 공개키를 확인하는 분기는 기본 `/etc/adbkey.pub`의 첫 줄을 비교하므로, 설치 이미지가 서로 다른 팀원 키를 어떻게 허용하는지는 별도 확인한다. 실제 동시 접속은 두 PC가 각각 셸을 연 상태로 `uptime`을 실행하는 방식으로 검증할 수 있으며, 이번에는 소스만 검토했다.
+- 전원만 다시 연결하는 운영 검증은 USB와 노트북이 빠진 상태에서 Wi-Fi·WG 재연결, 실제 heartbeat API HTTP 200 및 서버 상태 갱신, Windows VLC 실영상 재생, 서비스·네트워크 장애 후 복구까지 확인한다. 최신 기록은 WG handshake 0, heartbeat `10.0.0.1:3000` 타임아웃 및 재부팅 표본에서 `rkipc` 미실행이다. 운영 서버 주소와 포트 계약을 먼저 확인하고 `wg_ok` 검사 대상 `wg1`과 실제 `wg0` 차이를 점검한다. 이번 검토에서 보드와 서버 설정은 변경하지 않았다.
+
+## Wi-Fi 주소의 DHCP 여부 확인 — 2026-11-09
+
+- ADB `ip -4 addr show dev wlan0`에서 `10.141.95.101/24`는 `forever`, `10.141.95.102/24`는 `secondary dynamic noprefixroute` 및 유효시간 2334초로 확인. 기본 경로는 핫스팟 게이트웨이 `10.141.95.250` 경유 `wlan0 src 10.141.95.102`이므로 일반 외부 트래픽의 Wi-Fi 송신 주소는 동적 할당값이다.
+- `dhcpcd` 실행 확인. 조회한 `/etc/dhcpcd.conf`의 정적 IPv4 지시문 및 최근 임대 로그는 출력 없음. `.101`은 수명 표기만 확인했으며 그 설정 주체나 핫스팟 간 주소 유지 보장은 미확인. `wg0`의 설정 주소 `10.0.1.1`은 Wi-Fi 주소와 별개다.
+
+## 현재 보드 WireGuard 부팅 스크립트와 heartbeat 경로 확인 — 2026-11-09
+
+- ADB 읽기 결과 `/etc/init.d/S50wireguard`는 `wg-quick up/down /etc/wireguard/wg0.conf`를 호출하며 start/stop/restart/status를 제공한다. 11월 5일 원래 기록의 wg1 버전과 달리 현재 보드 설치본은 wg0다. 로컬 Git 추적 목록에 S50wireguard 파일은 없음.
+- 앞선 ADB 출력에서 활성 WireGuard 인터페이스 wg0만 존재, peer AllowedIPs `10.0.0.100/32`, Endpoint `43.201.227.58:51820`, latest handshake epoch 0 확인. `ip route get 10.0.0.100`은 wg0/src 10.0.1.1이고 `10.0.0.1`은 핫스팟 게이트웨이 경유 wlan0. 핫스팟 주소는 당시 관측값.
+- PID 3087 heartbeat는 5초마다 연결 타임아웃을 보고했다. 현재 heartbeat 기본 `10.0.0.1:3000`과 운영 VPN 목적지 `10.0.0.100`을 구분한다. 후속 ping 확인 결과는 미수신. 이번 확인에서 WireGuard 및 heartbeat 설정은 변경하지 않았다.
+
+## 보드 백업 목록 확인 — 2026-11-09
+
+- USB ADB 읽기 전용 조회로 백업 7개 항목, 총 138 KiB 확인. `/userdata` 90 KiB, `/oem` 28 KiB, `/` 20 KiB. 당시 `/userdata` 사용률 26%, 여유 약 169 MiB. 상세 경로·용도·정리 기준은 `docs/BOARD_BACKUP_INVENTORY.md`에 기록.
+- `/heartbeat.conf` 존재 및 서비스 경로 `/etc/heartbeat.conf` 부재 확인. 구 `/userdata/rkipc.ini.bak`는 11월 9일 시계 백업 내 사용자 INI와 내용 동일. 이번 조회는 보드 파일 이동·삭제 없이 진행.
+
+## 새 heartbeat 보드 교체 및 설정 파일 없이 서비스 시작 확인 — 2026-11-09
+
+- 사용자 ADB 로그에서 새 ARM 바이너리 `/tmp/i1-heartbeat.new --dry-run` 성공. `wlan0`의 대문자 MAC `7424CA5004AF`, `rtsp_ok=false`, `wg_ok=false` 출력. `wg_ok`는 이번 실행 기본값 `wg1` 상태를 반영하므로 다른 인터페이스의 VPN 연결 여부는 미확인.
+- 기존 `/usr/bin/i1-heartbeat` 및 `/etc/init.d/S60heartbeat`를 `/userdata/heartbeat-backup-20261109-090040`에 백업한 뒤 새 파일로 교체. 서비스 시작 PID 2812 확인. 이후 `/etc/heartbeat.conf` 제거 및 서비스 재시작 뒤 `heartbeat running PID=3087` 확인. 별도 설정 파일 없는 수동 서비스 시작까지 검증.
+- `mv /etc/heartbeat.conf "$backup/heartbeat.conf"`는 `backup`을 정의한 서브셸 밖에서 실행되었으므로 파일이 존재했고 변수 값이 비어 있었다면 `/heartbeat.conf`로 이동했을 수 있음. 실제 이동 대상은 확인되지 않았다. 서버 HTTP200 수신과 재부팅 자동 전송은 아직 미확인.
+
+## heartbeat 기본 전송 및 설정 파일 선택화 — 2026-11-09
+
+- 새 소스는 인자 없이 실행하면 5초 간격으로 `10.0.0.1:3000`에 전송한다. `--send`와 주소·인터페이스 옵션은 기존 호출과 호환된다. `--dry-run`을 명시하면 기본 한 번 JSON을 출력한다.
+- `S60heartbeat`는 설정 파일 없이 부팅 시 시작한다. 기본 MAC은 보드 등록과 일치하는 `wlan0`, `wg_ok` 검사 기본값은 `wg1`이다. 기존 `/etc/heartbeat.conf`가 있으면 기존 주소·인터페이스·`ENABLED`를 존중한다. 실제 전송 경로는 보드의 라우팅을 따른다.
+- 문서와 전달 ZIP 갱신. Windows 프로토콜 테스트, 셸 문법 및 설정값 확인, ZIP CRC와 소스 대조 통과. 새 ARM 바이너리 빌드와 보드 부팅·전송 확인은 남아 있다.
+
+## heartbeat 전송 기본 주소 설정 — 2026-11-09
+
+- 사용자 요청에 따라 로컬 `i1-heartbeat` 소스와 `S60heartbeat`, `heartbeat.conf`의 기본 목적지를 `10.0.0.1:3000`으로 설정. CLI는 `--send`로 전송을 시작하며 `--host`와 `--port`로 덮어쓸 수 있다. 옵션 없는 실행은 dry-run이고 서비스 기본값은 `ENABLED=0`이다. 운영 서버의 VPN 주소 `10.0.0.100`은 11월 6일 공지에 따른 별도 값이다.
+- README와 전달 ZIP도 갱신. Windows 프로토콜 테스트, 셸 문법 및 설정값 확인, ZIP 12개 항목 CRC·소스 바이트 대조 통과. 새 ARM 바이너리 빌드와 보드 적용은 미수행.
+
+## rkipc 자체 NTP 비활성화 및 재부팅 후 UTC 확인 — 2026-11-09
+
+- USB ADB에서 Luckfox Pico Zero 모델 확인. 변경 전 부팅 약 119초에 Windows와 보드 UTC epoch가 같은 초, 시스템 `ntpd` PID 275, `rkipc` 미실행. IMX415용 `/oem/usr/share/rkipc-800w.ini`와 `/userdata/rkipc.ini` 모두 `[network.ntp] enable = 1`, 주기 60초. `RkLunch.sh`에서 IMX415용 원본 선택과 원본 설정 복사 경로 확인. 당시 `/tmp/rkipc-factory-config.ini` 링크는 존재하지 않았음.
+- 제조사 공개 `project/app/rkipc/rkipc/common/network/ntp.c`의 `rkipc_ntp_update()`에 `offset + 28800` 및 `busybox date -s` 확인. 해당 경로의 시계 덮어쓰기를 방지하도록 두 INI를 `/userdata/rkipc-clock-backup.qzDH9v/`에 백업한 뒤 `[network.ntp]`의 `enable`만 `0`으로 변경하고 `sync`. 시스템 `ntpd` 유지.
+- ADB 재부팅 후 8초 시점에 시계가 2021년이었고, 약 39초에 Windows UTC와 같은 초로 보정. 이후 약 69·99·129·159초에도 동일 초 또는 PC 조회 시간 범위 내 일치. 모든 표본에서 두 INI의 `enable = 0` 유지, `ntpd` PID 279 유지. 시계가 부팅 직후부터 유지되는 RTC 문제는 별도.
+- `rkipc`는 이번 재부팅 표본에서 실행되지 않았다. 확인 범위는 설정의 재부팅 유지와 시스템 UTC 자동 보정 및 관측 구간 유지까지이며, `rkipc` 동작 중 +8시간 재발 여부와 실제 영상은 후속 검증 대상이다.
+
+## 우리 보드 시계 오차 재확인 — 2026-11-09
+
+- 11월 5일 `date -u`에서 Windows보다 약 8시간 앞선 결과가 있었고, 11월 6일에는 같은 `ntpd` PID를 유지한 채 부팅 초기 2021년에서 정상 UTC로 자동 보정된 결과가 있었다. 자동 보정 후 `rkipc`가 시간을 다시 덮어쓰는지는 우리 보드에서 아직 확인하지 않았다.
+- Windows에서 ADB 데몬을 시작한 뒤 `adb devices -l`을 실행했으나 장치 목록이 비어 있었다. 이번 점검에서는 보드에 접속하거나 시계·설정을 변경하지 않았다.
+- 다음 점검은 보드와 Windows의 UTC 비교, `ntpd` 및 `rkipc` 프로세스, `/tmp/rkipc-factory-config.ini` 실제 대상과 `/userdata/rkipc.ini`의 `[network.ntp]` 값 확인이다. 우리 보드에서도 자동 보정 이후 +8시간 재발과 `rkipc` 자체 NTP 사용이 확인되면 실제 원본과 사용자 ini를 백업하고 해당 섹션의 `enable`만 0으로 조정한다. 재부팅 후 몇 분간 UTC를 비교해 초기 보정과 +8시간 재발 여부를 구분한다.
+
+## 조장 BoardServer 저장소 검토 — 2026-11-09
+
+- `r1n90m0d/BoardServer` main `6eb3ad5c348f6127a0096fe47ed5d25d33f33edc`(2026-11-04)를 `references/BoardServer-review`에 읽기용으로 복제. 보드용 heartbeat, 시작 스크립트, ADB 설치 스크립트, 모의 수신기와 문서 확인. 이번 검토는 정적 소스 확인이며 빌드·ADB 적용·운영 호출은 미수행.
+- 조장 heartbeat는 libcurl로 `/v1/devices/heartbeat`에 5초 간격 전송. wlan0의 대문자 MAC 12자리와 status/rtsp_ok/wg_ok/config_version 포함. 연결 2초·전체 3초 제한, `HEARTBEAT_URL` 기본 `http://10.0.0.1:3000/v1/devices/heartbeat`, `HEARTBEAT_IFACE` 기본 wg1 및 libcurl 인터페이스 고정. 이는 소스 기본값이며 11월 6일 운영 서버 공지의 VPN 주소 10.0.0.100과 구분. rtsp_ok는 rkipc 프로세스, wg_ok는 인터페이스 UP을 검사.
+- `deploy/install_board.sh`는 ADB 사전 검사 및 최초 1회 백업 후 factory ini와 `/userdata/rkipc.ini`의 rkipc NTP 비활성화, `dhcpcd.conf`에 `denyinterfaces wg*` 적용, `/usr/bin/heartbeat` 및 `/etc/init.d/S60heartbeat` 설치. dry-run/시리얼 선택 지원. WireGuard 키·피어 구성은 별도. 문서상 기존 적용 보드 재실행만 검증됐고 새로 재플래싱한 보드 첫 설치는 미검증.
+- `docs/rkipc-clock-fix.md`는 조장 환경에서 rkipc NTP의 하드코딩된 +8시간과 부팅 시 factory ini 복사 동작을 기록. 시스템 ntpd와 구분하며 호종님 보드에도 동일한 수정이 필요하다고 단정하지 않는다.
+- 우리 저장소도 heartbeat 구현을 포함하나 기본 비활성 설정 및 `/usr/bin/i1-heartbeat`를 사용. 두 버전이 동일한 `/etc/init.d/S60heartbeat` 설치 경로를 사용하므로 조장 설치 스크립트를 실행하면 기존 시작 스크립트 교체 가능. BoardServer의 Python 수신기는 200/403/무응답 모의 시험용이며 실제 AWS API·DB·웹·영상 구현은 이 스냅샷의 파일 목록에 없음.
+
 ## WebDashboard 공개 저장소 검토 — 2026-11-06
 
 - 사용자 제공 https://github.com/moonjuyoung727/WebDashboard 의main6e3dc54091173e3dec250c54b5cdd4be4c229ec1(2026-11-04) 확인. 승인된clone으로references/WebDashboard-review 보관. 원격/로컬소스수정없음,빌드/실서버호출/화면검증미실행. 상세 docs/WEBDASHBOARD_REVIEW_2026-11-06.md.
@@ -1250,3 +1508,35 @@
 - 핫스팟 작업 말미에 사용자가 심한 발열과 reboot/poweroff 무응답을 보고했다.
 - 당시 답변은 전원 공급 연결을 모두 분리하고 식힌 뒤 모델·전원 방식/전압·부팅 로그를 확인하는 것이었다. 실제 분리 수행, 보드 회복, 원인 및 손상 여부는 확인되지 않았다.
 - 후속 하드웨어 작업은 보드 상태 확인을 먼저 진행한다. 카메라 스트림 초기화 성공과 Wi-Fi 연결 실패, 색 편향 미확인을 구분해서 이어간다.
+
+
+## 2026-11-12 I1/I2 integration continuation
+- User confirmed rkipc terminated, no rkipc/cctv/rkaiq process in ps.
+- Sensor currently 3864x2192 MEDIA_BUS_FMT_SGBRG10_1X10 (0x300e); keep this mode, output target20fps on both paths.
+- Full OEM RkLunch received: S21appinit calls RkLunch, which runs post_chk asynchronously. Preserve module/network/config initialization. Launch handoff must occur at the original rkipc launch point, not merely by init-script numbering.
+- Prepared marker-gated OEM handoff, S59 service, dual-frame health helper, backup/install/rollback scripts in deliverables/i2_board.
+- Heartbeat default process cctv-dual-rtsp, wg0 binding, destination 10.0.0.100:3000/v1/devices/heartbeat. rtsp_ok remains process-only; frame health is separate.
+- Native libcurl client loopback tests passed: dry-run no traffic,403->200 retry, JSON schema, missing interface no fallback. Health helper rejects stale/empty/wrong PID/recovering/malformed state. Shell syntax and OEM patch recognizer passed.
+- Do not operate user's board or VM directly. User executes adb and board commands. Board deployment, reboot, actual20fps and server/MediaMTX verification remain pending.
+
+- Final build: ARM streamer and heartbeat succeeded. ARM heartbeat qemu loopback tests passed; ELF NEEDED only libc.so.0 (libcurl statically linked). Streamer QEMU hits SIGSEGV during vendor hardware probing after missing Rockchip efuse/device-tree; no board runtime success claimed. Package packages/i2-board-20261112 and tar.gz prepared with SHA256SUMS.
+
+
+## 2026-11-13 모듈화 및 검증
+- 사용자 요청으로 streaming/heartbeat를 기능별 .c/.h로 분리. 실행 옵션·20fps 출력·5초 heartbeat·wg0 바인딩·초기화/정리 순서 유지.
+- streaming: src/main,config,pipeline,isp,video,rtsp_server,status,runtime. 기존 dual_rtsp.c는 src 모듈로 대체. heartbeat: 기존 main/protocol에 platform,transport,runtime,config 분리.
+- 기존 소스와 바이너리는 artifacts/refactor-20261113에 백업. 기존 packages/i2-board-20261112 유지, 새 패키지는 packages/i2-board-20261113-modular 및 tar.gz.
+- 검증 통과: streamer ARM -Wall/-Wextra/-Werror 빌드, CLI 옵션/재시도 파싱/진단 조합/프로파일 회귀 검사, heartbeat native/ARM 빌드, 기존 protocol 테스트, native 및 qemu-arm 실제 HTTP 403→200/JSON/dry-run/없는 인터페이스 우회 금지, 상태 검사, 패키지 SHA256 검사.
+- 보드나 VM에 직접 접속하지 않음. 새 모듈화 바이너리는 보드에서 실행 미검증. 이전 사용자가 보낸 11/12 로그는 약2분간 두 스트림 20.14~20.58fps 및 Ctrl+C 정리를 확인한 것으로, 새 바이너리 검증과 구분.
+- 모듈별 역할/변경 지점/빌드 명령은 docs/MODULE_GUIDE.md. 기존 서버503 및 I2 통합 검증 미완료 상태는 이번 모듈화로 해결된 것이 아님.
+
+
+## 2026-11-13 보드 시험: 미해결 장애
+
+사용자가 영구 설치 후 S59cctv running, health의 양쪽 최근 프레임, S60heartbeat running을 보고했습니다. 재부팅 직후 명령 실행 여부는 설치 대화 흐름에 따른 보고이며 독립 재검증하지 않았습니다. heartbeat 실행은 실서버 HTTP200을 입증하지 않습니다.
+
+모듈화 버전에서 양쪽 약19.5~19.8fps 로그와 프레임 카운터 증가를 확인했습니다. VPN으로 live/1을 받는 VLC에서 demux 데이터·디코딩·표시 카운터가 증가했지만 사용자는 화면 정지를 보고했습니다. 영상 내용이 실제로 갱신되는지는 미확인입니다.
+
+이후 state=failed, attempt=3, cctv stopped 확인. 로그에 NO_FRAME과 재시도, 커널에 rkisp_stream_stop 및 rkisp_isp_sd_s_stream timeout이 반복됩니다. 재초기화 후 영상 복구 실패는 확인됐고, 최초 원인은 미확정입니다. VLC 종료나 VPN을 원인으로 단정하지 않습니다. 종료 이후 WireGuard handshake 응답도 기록됐습니다.
+
+다음 시험: 실패 로그를 보관하고 재부팅 후 VLC 미접속 상태에서 프레임·health 유지 확인, 이어 접속/종료 전후 비교. 해당 시험 결과는 아직 수신하지 않았습니다. 이 커밋은 개발 진행 상태이며 안정화 완료본이 아닙니다.

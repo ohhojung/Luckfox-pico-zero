@@ -1,0 +1,56 @@
+#!/bin/sh
+# RkLunch signals completion of OEM initialization before starting this service.
+BIN=/usr/bin/cctv-dual-rtsp
+PIDFILE=/var/run/cctv-dual-rtsp.pid
+running() {
+    [ -r "$PIDFILE" ] || return 1
+    read -r service_pid < "$PIDFILE"
+    case "$service_pid" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$service_pid" -gt 1 ] || return 1
+    [ "$(readlink "/proc/$service_pid/exe" 2>/dev/null)" = "$BIN" ] || return 1
+    kill -0 "$service_pid" 2>/dev/null || return 1
+    state=$(awk '{print $3}' "/proc/$service_pid/stat" 2>/dev/null)
+    [ "$state" != Z ] && [ "$state" != X ]
+}
+if [ "${1:-}" = start ] && [ -e /userdata/cctv-i2.enabled ] && [ ! -e /tmp/cctv-oem-ready ]; then
+    echo 'cctv deferred until OEM initialization completes'
+    exit 0
+fi
+case "${1:-}" in
+    start|stop|restart)
+        if [ "${CCTV_SERVICE_LOCKED:-0}" != 1 ]; then
+            mkdir /var/run/cctv-service-command.lock 2>/dev/null || { echo 'Another service command is running'; exit 1; }
+            trap 'rmdir /var/run/cctv-service-command.lock' EXIT
+            trap 'exit 1' HUP INT TERM
+            export CCTV_SERVICE_LOCKED=1
+        fi ;;
+esac
+case "${1:-}" in
+    start)
+        running && { echo 'cctv already running'; exit 0; }
+        [ -x "$BIN" ] || { echo "Missing $BIN"; exit 1; }
+        export LD_LIBRARY_PATH=/oem/usr/lib:/oem/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+        iq_dir=/etc/iqfiles
+        [ ! -d /oem/usr/share/iqfiles ] || iq_dir=/oem/usr/share/iqfiles
+        "$BIN" -a "$iq_dir" -F 30 </dev/null >/tmp/cctv-dual-rtsp.log 2>&1 &
+        echo "$!" > "$PIDFILE"
+        sleep 1
+        running || { echo 'cctv failed; see /tmp/cctv-dual-rtsp.log'; exit 1; }
+        echo 'cctv process started; verify frames separately'
+        ;;
+    stop)
+        running || { echo 'cctv not running'; exit 0; }
+        kill -TERM "$service_pid" || exit 1
+        tries=0
+        while running && [ "$tries" -lt 20 ]; do sleep 1; tries=$((tries+1)); done
+        running && { echo 'cctv still running'; exit 1; }
+        echo 'cctv stopped'
+        ;;
+    restart) "$0" stop && "$0" start ;;
+    health)
+        running || { echo 'cctv stopped'; exit 1; }
+        /usr/bin/cctv-check-health /tmp/cctv-dual-rtsp.status "$service_pid" || { echo 'cctv frames not healthy'; exit 1; }
+        echo 'both streams have recent frames' ;;
+    status) running && { echo "cctv running PID=$service_pid"; exit 0; }; echo 'cctv stopped'; exit 1 ;;
+    *) echo "Usage: $0 {start|stop|restart|status|health}"; exit 2 ;;
+esac

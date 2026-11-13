@@ -23,6 +23,6 @@ else
     set --
 fi
 "$compiler" -std=c99 -O2 -Wall -Wextra -Werror \
-    "$@" "$project_dir/src/heartbeat.c" "$project_dir/src/protocol.c" -lcurl -lrt \
+    "$@" "$project_dir/src/"*.c -lcurl -lrt \
     -o "$output_dir/heartbeat"
-printf 'Built: %s/heartbeat\nDefault mode is dry-run; it sends nothing.\n' "$output_dir"
+printf 'Built: %s/heartbeat\nThe program sends by default. Use --dry-run to print the payload.\n' "$output_dir"
