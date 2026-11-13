@@ -33,7 +33,7 @@ int run_once(int argc, char **argv, unsigned restart_attempt)
     for (size_t i=0; i<video_count; ++i) {
         const struct stream_profile *p=&stream_profiles[i];
         videos[i]=(struct video_stream){.channel=p->channel,.path=p->path,.width=p->width,
-            .height=p->height,.bitrate=p->bitrate,.fps=p->fps};
+            .height=p->height,.bitrate=p->bitrate,.fps=p->fps,.h264=options.h264};
     }
     publish_status("starting", videos, restart_attempt);
     alarm(30);
@@ -75,7 +75,7 @@ int run_once(int argc, char **argv, unsigned restart_attempt)
     uint64_t relative = rtsp_get_reltime(), ntp = rtsp_get_ntptime();
     for (size_t i = 0; i < video_count; ++i) {
         struct video_stream *video = &videos[i];
-        if (!rtsp_add_video(rtsp,video->path,&video->session,relative,ntp))
+        if (!rtsp_add_video(rtsp,video->path,&video->session,relative,ntp,video->h264))
             goto cleanup;
         if (!start_video(video))
             goto cleanup;
@@ -87,8 +87,8 @@ int run_once(int argc, char **argv, unsigned restart_attempt)
     bool tnr_requested = false;
     for (size_t i = 0; i < video_count; ++i) {
         videos[i].last_frame_ms = last_report_ms;
-        printf("READY port=%d path=%s codec=H265 size=%ux%u target_fps=%u bitrate_kbps=%u\n",
-               PORT, videos[i].path, videos[i].width, videos[i].height, videos[i].fps, videos[i].bitrate);
+        printf("READY port=%d path=%s codec=%s size=%ux%u target_fps=%u bitrate_kbps=%u\n",
+               PORT, videos[i].path, videos[i].h264 ? "H264" : "H265", videos[i].width, videos[i].height, videos[i].fps, videos[i].bitrate);
     }
     // All RTSP calls run on this thread. Short per-channel waits keep both sessions serviced.
     while (!stopping) {

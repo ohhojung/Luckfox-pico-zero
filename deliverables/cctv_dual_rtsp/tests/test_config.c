@@ -14,6 +14,13 @@ int main(void)
     char *defaults[]={"streamer",NULL};
     assert(parse(1,defaults,&o)==0);
     assert(!o.iq_dir && !o.fixed_sensor_fps && !o.test_tnr && !o.skip_aiq);
+    assert(!o.h264);
+    char *avc[]={"streamer","-c","h264",NULL};
+    assert(parse(3,avc,&o)==0 && o.h264);
+    char *hevc[]={"streamer","-c","h265",NULL};
+    assert(parse(3,hevc,&o)==0 && !o.h264);
+    char *badcodec[]={"streamer","-c","jpeg",NULL};
+    assert(parse(3,badcodec,&o)==-1);
     char *production[]={"streamer","-a","/oem/usr/share/iqfiles","-F","30",NULL};
     assert(parse(5,production,&o)==0);
     assert(!strcmp(o.iq_dir,"/oem/usr/share/iqfiles") && o.fixed_sensor_fps && !o.skip_aiq);

@@ -9,12 +9,17 @@ const struct stream_profile stream_profiles[STREAM_COUNT] = {
 int parse_options(int argc, char **argv, struct stream_options *options)
 {
     const char *iq_dir = NULL;
-    const char *usage = "Usage: %s [-a IQ_DIR] [-F 30 [-T]] | -N\n";
+    const char *usage = "Usage: %s [-c h264|h265] {[-a IQ_DIR] [-F 30 [-T]] | -N}\n";
     bool fixed_sensor_fps = false;
     bool test_tnr = false;
     bool skip_aiq = false;
+    bool h264 = false;
     int option;
-    while ((option = getopt(argc, argv, "a:F:TNh")) != -1) {
+    while ((option = getopt(argc, argv, "a:F:TNc:h")) != -1) {
+        if (option == 'c' && (!strcmp(optarg, "h264") || !strcmp(optarg, "h265"))) {
+            h264 = !strcmp(optarg, "h264");
+            continue;
+        }
         if (option == 'a') {
             iq_dir = optarg;
             continue;
@@ -40,6 +45,6 @@ int parse_options(int argc, char **argv, struct stream_options *options)
         return -1;
     }
 
-    *options=(struct stream_options){iq_dir,fixed_sensor_fps,test_tnr,skip_aiq};
+    *options=(struct stream_options){iq_dir,fixed_sensor_fps,test_tnr,skip_aiq,h264};
     return 0;
 }

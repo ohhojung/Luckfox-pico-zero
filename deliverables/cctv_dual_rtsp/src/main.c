@@ -8,7 +8,7 @@
 int main(int argc, char **argv)
 {
     if (argc == 2 && !strcmp(argv[1], "-h")) {
-        puts("Usage: cctv-dual-rtsp [-a IQ_DIR] [-F 30 [-T]] | -N");
+        puts("Usage: cctv-dual-rtsp [-c h264|h265] {[-a IQ_DIR] [-F 30 [-T]] | -N}");
         return EXIT_SUCCESS;
     }
     /* File lock survives pipeline retries and prevents multiple camera owners. */

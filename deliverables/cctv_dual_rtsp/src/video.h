@@ -5,6 +5,7 @@
 #include "rtsp_demo.h"
 struct video_stream {
     int channel;
+    bool h264;
     const char *path;
     unsigned width;
     unsigned height;

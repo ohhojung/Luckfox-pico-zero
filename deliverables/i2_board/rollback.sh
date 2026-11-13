@@ -5,13 +5,20 @@ case "$backup" in /userdata/cctv-i2-backup-*) ;; *) echo 'Run the copy inside th
 [ -f "$backup/oem/usr/bin/RkLunch.sh" ] || exit 1
 [ ! -x /etc/init.d/S59cctv ] || /etc/init.d/S59cctv stop
 [ ! -x /etc/init.d/S60heartbeat ] || /etc/init.d/S60heartbeat stop
-for relative in oem/usr/bin/RkLunch.sh usr/bin/cctv-dual-rtsp usr/bin/cctv-check-health etc/init.d/S59cctv usr/bin/i1-heartbeat etc/init.d/S60heartbeat etc/heartbeat.conf; do
+for relative in oem/usr/bin/RkLunch.sh usr/bin/cctv-dual-rtsp usr/bin/cctv-check-health etc/init.d/S59cctv usr/bin/i1-heartbeat etc/init.d/S60heartbeat etc/heartbeat.conf etc/cctv-codec; do
     if [ -f "$backup/$relative" ]; then
         cp -p "$backup/$relative" "/$relative"
     else
         rm -f "/$relative"
     fi
 done
+if [ -f "$backup/network-files" ]; then
+    while IFS= read -r target; do
+        case "$target" in /etc/dhcpcd.conf|/userdata/rkipc.ini|/oem/usr/share/*.ini) ;; *) echo 'Invalid network backup path'; exit 1 ;; esac
+        [ ! -L "$target" ] || exit 1
+        cp -p "$backup/network$target" "$target"
+    done < "$backup/network-files"
+fi
 rm -f /userdata/cctv-i2.enabled /tmp/cctv-oem-ready
 sync
 echo 'Previous files restored. Reboot manually.'

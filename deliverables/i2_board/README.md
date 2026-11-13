@@ -1,3 +1,7 @@
+# 2026-11-13 추가 기능
+
+새 패키지와 dry-run·코덱 전환·선택적 네트워크 보정은 [CODEC_INSTALL_GUIDE.md](CODEC_INSTALL_GUIDE.md)를 먼저 확인하세요. 아래 기존 modular 패키지 안내와 버전을 구분하세요.
+
 # i2-modular 사용 설명서
 
 작성일: 2026-11-13 · 대상: Luckfox Pico Zero + IMX415 · 보드2 CAM-04AF

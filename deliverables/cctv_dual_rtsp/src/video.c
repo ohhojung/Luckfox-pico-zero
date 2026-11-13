@@ -1,4 +1,5 @@
 #include "video.h"
+#include "capture.h"
 #include "config.h"
 #include "runtime.h"
 #include <stdio.h>
@@ -25,19 +26,29 @@ bool start_video(struct video_stream *video)
     video->vi_enabled = true;
 
     VENC_CHN_ATTR_S encoder = {0};
-    encoder.stVencAttr.enType = RK_VIDEO_ID_HEVC;
+    encoder.stVencAttr.enType = video->h264 ? RK_VIDEO_ID_AVC : RK_VIDEO_ID_HEVC;
     encoder.stVencAttr.enPixelFormat = RK_FMT_YUV420SP;
     encoder.stVencAttr.u32PicWidth = encoder.stVencAttr.u32VirWidth = video->width;
     encoder.stVencAttr.u32PicHeight = encoder.stVencAttr.u32VirHeight = video->height;
     encoder.stVencAttr.u32StreamBufCnt = 2;
     encoder.stVencAttr.u32BufSize = video->width * video->height * 3 / 2;
-    encoder.stRcAttr.enRcMode = VENC_RC_MODE_H265CBR;
-    VENC_H265_CBR_S *rate = &encoder.stRcAttr.stH265Cbr;
-    rate->u32BitRate = video->bitrate;
-    rate->u32Gop = video->fps;
-    rate->u32SrcFrameRateNum = video->fps;
-    rate->fr32DstFrameRateNum = video->fps;
-    rate->u32SrcFrameRateDen = rate->fr32DstFrameRateDen = 1;
+    if (video->h264) {
+        encoder.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
+        VENC_H264_CBR_S *rate = &encoder.stRcAttr.stH264Cbr;
+        rate->u32BitRate = video->bitrate;
+        rate->u32Gop = video->fps;
+        rate->u32SrcFrameRateNum = video->fps;
+        rate->fr32DstFrameRateNum = video->fps;
+        rate->u32SrcFrameRateDen = rate->fr32DstFrameRateDen = 1;
+    } else {
+        encoder.stRcAttr.enRcMode = VENC_RC_MODE_H265CBR;
+        VENC_H265_CBR_S *rate = &encoder.stRcAttr.stH265Cbr;
+        rate->u32BitRate = video->bitrate;
+        rate->u32Gop = video->fps;
+        rate->u32SrcFrameRateNum = video->fps;
+        rate->fr32DstFrameRateNum = video->fps;
+        rate->u32SrcFrameRateDen = rate->fr32DstFrameRateDen = 1;
+    }
     if (!check("VENC CreateChn", channel, RK_MPI_VENC_CreateChn(channel, &encoder)))
         return false;
     video->encoder_created = true;
@@ -55,6 +66,7 @@ bool start_video(struct video_stream *video)
 
 void stop_video(const struct video_stream *video)
 {
+    capture_close(video->channel);
     int channel = video->channel;
     MPP_CHN_S source = { .enModId = RK_ID_VI, .s32DevId = CAMERA, .s32ChnId = channel };
     MPP_CHN_S target = { .enModId = RK_ID_VENC, .s32DevId = 0, .s32ChnId = channel };
@@ -83,6 +95,8 @@ bool send_frame(struct video_stream *video)
     }
 
     const uint8_t *data = RK_MPI_MB_Handle2VirAddr(packet.pMbBlk);
+    if (data && packet.u32Len && packet.u32Len <= INT_MAX)
+        capture_frame(video->channel, data, packet.u32Len, packet.u64PTS, video->h264);
     if (!data || packet.u32Len == 0 || packet.u32Len > INT_MAX ||
         rtsp_tx_video(video->session, data, (int)packet.u32Len, packet.u64PTS) < 0)
         ++video->tx_errors;

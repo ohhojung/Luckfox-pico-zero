@@ -32,7 +32,12 @@ case "${1:-}" in
         export LD_LIBRARY_PATH=/oem/usr/lib:/oem/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
         iq_dir=/etc/iqfiles
         [ ! -d /oem/usr/share/iqfiles ] || iq_dir=/oem/usr/share/iqfiles
-        "$BIN" -a "$iq_dir" -F 30 </dev/null >/tmp/cctv-dual-rtsp.log 2>&1 &
+        codec=h265
+        if [ -f /etc/cctv-codec ]; then
+            codec=$(cat /etc/cctv-codec) || exit 1
+        fi
+        case "$codec" in h264|h265) ;; *) echo 'Invalid /etc/cctv-codec: use h264 or h265'; exit 1 ;; esac
+        "$BIN" -a "$iq_dir" -F 30 -c "$codec" </dev/null >/tmp/cctv-dual-rtsp.log 2>&1 &
         echo "$!" > "$PIDFILE"
         sleep 1
         running || { echo 'cctv failed; see /tmp/cctv-dual-rtsp.log'; exit 1; }
