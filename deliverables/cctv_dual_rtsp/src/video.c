@@ -95,10 +95,24 @@ bool send_frame(struct video_stream *video)
     }
 
     const uint8_t *data = RK_MPI_MB_Handle2VirAddr(packet.pMbBlk);
-    if (data && packet.u32Len && packet.u32Len <= INT_MAX)
-        capture_frame(video->channel, data, packet.u32Len, packet.u64PTS, video->h264);
-    if (!data || packet.u32Len == 0 || packet.u32Len > INT_MAX ||
-        rtsp_tx_video(video->session, data, (int)packet.u32Len, packet.u64PTS) < 0)
+    if (!data || packet.u32Len == 0 || packet.u32Len > INT_MAX) {
+        fprintf(stderr, "INVALID_FRAME path=%s bytes=%u\n", video->path, packet.u32Len);
+        check("VENC ReleaseStream", video->channel, RK_MPI_VENC_ReleaseStream(video->channel, &frame));
+        return false;
+    }
+    if (video->have_pts) {
+        if (packet.u64PTS <= video->last_pts) ++video->pts_non_increasing;
+        else {
+            uint64_t delta=packet.u64PTS-video->last_pts;
+            if (!video->pts_samples || delta<video->pts_min_delta) video->pts_min_delta=delta;
+            if (!video->pts_samples || delta>video->pts_max_delta) video->pts_max_delta=delta;
+            ++video->pts_samples;
+        }
+    }
+    video->have_pts=true;
+    video->last_pts=packet.u64PTS;
+    capture_frame(video->channel, data, packet.u32Len, packet.u64PTS, video->h264);
+    if (rtsp_tx_video(video->session, data, (int)packet.u32Len, packet.u64PTS) < 0)
         ++video->tx_errors;
     ++video->frames;
     ++video->total_frames;

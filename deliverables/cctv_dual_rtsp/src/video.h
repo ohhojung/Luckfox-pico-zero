@@ -12,6 +12,9 @@ struct video_stream {
     unsigned bitrate;
     unsigned fps;
     uint64_t total_frames;
+    uint64_t last_pts, pts_min_delta, pts_max_delta;
+    unsigned pts_samples, pts_non_increasing;
+    bool have_pts;
     rtsp_session_handle session;
     bool vi_enabled;
     bool encoder_created;

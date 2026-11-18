@@ -1,6 +1,8 @@
 #define _POSIX_C_SOURCE 200809L
 #include "protocol.h"
 #include "platform.h"
+
+
 #include <dirent.h>
 #include <net/if.h>
 #include <stdio.h>
@@ -46,7 +48,8 @@ int rtsp_running(const char *process_name) {
         if(!read_line(path,state,sizeof state)) {
             const char *end=strrchr(state,')');
             if(end && end[1]==' ' && end[2] && end[2]!='Z' && end[2]!='X') {
-                closedir(d); return 1;
+                closedir(d);
+                return 1;
             }
         }
     }

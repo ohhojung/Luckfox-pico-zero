@@ -2,6 +2,7 @@
 #include "config.h"
 #include "runtime.h"
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "rk_aiq_user_api2_ae.h"
@@ -12,10 +13,19 @@ bool request_sensor_fps(const rk_aiq_sys_ctx_t *isp)
     if (!check("AIQ GetExpSwAttr", CAMERA, rk_aiq_user_api2_ae_getExpSwAttr(isp, &exposure)))
         return false;
     exposure.stAuto.stFrmRate.isFpsFix = true;
-    exposure.stAuto.stFrmRate.FpsValue = SENSOR_REQUEST_FPS;
+    Uapi_ExpQueryInfo_t timing = {0};
+    if (!check("AIQ Query timing for VTS", CAMERA, rk_aiq_user_api2_ae_queryExpResInfo(isp, &timing)))
+        return false;
+    /* Keep the measured line period; AIQ's nominal fps differs across firmware. */
+    double requested = (double)timing.Fps * timing.LinePeriodsPerField / SENSOR_TARGET_VTS;
+    if (!isfinite(requested) || requested < 1.0 || requested > 60.0 || timing.LinePeriodsPerField < 1080) {
+        fprintf(stderr, "Invalid baseline sensor timing; refusing VTS request\n");
+        return false;
+    }
+    exposure.stAuto.stFrmRate.FpsValue = (float)requested;
     if (!check("AIQ SetExpSwAttr", CAMERA, rk_aiq_user_api2_ae_setExpSwAttr(isp, exposure)))
         return false;
-    printf("AIQ_FPS stage=running requested=%d\n", SENSOR_REQUEST_FPS);
+    printf("AIQ_FPS stage=running requested=%.3f target_vts=%d output_fps=%d\n", requested, SENSOR_TARGET_VTS, SENSOR_REQUEST_FPS);
     return true;
 }
 

@@ -1,3 +1,27 @@
+# 현재 배포 기준 — 2026-11-16
+
+최신 패키지는 packages/i2-board-20261116-osd-kst 입니다. 서비스는 H.265 기본값, VTS3750·양쪽18fps, TZ=KST-9 날짜 표시를 사용합니다. 코덱 파일로 H.264 시험이 가능합니다. heartbeat 전송 JSON과 프로세스 기준 상태 판정은 유지합니다. 아래 날짜별 안내는 이전 이력입니다.
+
+# 2026-11-15 날짜·시간 OSD
+
+최신 패키지: packages/i2-board-20261115-osd. [OSD_GUIDE.md](OSD_GUIDE.md) 참고. 메인·서브에 보드 현지 시각 표시, 실제 보드 표시 검증은 미완료입니다. heartbeat JSON은 다섯 필드를 유지하며 rtsp_ok는 프로세스 기준입니다. 과거 프레임 건강도 기반 heartbeat 제안은 취소됐습니다.
+
+# 2026-11-15 안정성 보완판
+
+현재 패키지: packages/i2-board-20261115-reliability. [RELIABILITY_GUIDE.md](RELIABILITY_GUIDE.md) 참고. 이전 패키지의 VTS3750/18fps 재부팅 검증과 이번 보완판의 실보드 검증은 구분합니다.
+
+# 최신 안정성 보완
+
+현재 패키지는 packages/i2-board-20261114-health 입니다. [RELIABILITY_GUIDE.md](RELIABILITY_GUIDE.md)의 변경 의미와 보드 적용 범위를 먼저 확인하세요.
+
+# 2026-11-14 VTS3750 시험 버전
+
+현재 패키지: packages/i2-board-20261114-vts3750. [VTS3750_GUIDE.md](VTS3750_GUIDE.md)를 우선 읽으세요. 새 실행 옵션은 -F 18이며 아래 과거 설명의 -F 30은 새 버전에 적용되지 않습니다. 출력 목표/GOP는 양쪽18, 센서 목표3750줄입니다. 보드 실측은 미완료입니다.
+
+# 2026-11-14 최신 점검
+
+현재 패키지: packages/i2-board-20261114-review. 보드에서 sh check-board.sh wg0 로 읽기 전용 점검. 상세 비교: 저장소 docs/BOARDSERVER_SYNC_20261114.md. 설치 옵션은 아래 코덱 설명서와 같습니다.
+
 # 2026-11-13 추가 기능
 
 새 패키지와 dry-run·코덱 전환·선택적 네트워크 보정은 [CODEC_INSTALL_GUIDE.md](CODEC_INSTALL_GUIDE.md)를 먼저 확인하세요. 아래 기존 modular 패키지 안내와 버전을 구분하세요.

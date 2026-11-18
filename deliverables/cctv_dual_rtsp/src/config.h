@@ -1,7 +1,7 @@
 #ifndef CCTV_CONFIG_H
 #define CCTV_CONFIG_H
 #include <stdbool.h>
-enum { CAMERA=0, PORT=554, SENSOR_REQUEST_FPS=30, GET_TIMEOUT_MS=10, STREAM_COUNT=2 };
+enum { CAMERA=0, PORT=554, SENSOR_REQUEST_FPS=18, SENSOR_TARGET_VTS=3750, GET_TIMEOUT_MS=10, STREAM_COUNT=2 };
 struct stream_profile { int channel; const char *path; unsigned width, height, bitrate, fps; };
 extern const struct stream_profile stream_profiles[STREAM_COUNT];
 struct stream_options { const char *iq_dir; bool fixed_sensor_fps, test_tnr, skip_aiq, h264; };

@@ -8,3 +8,6 @@ echo 'PASS: production options, retry parsing, diagnostics, invalid combinations
 
 ${CC:-cc} -std=gnu11 -Wall -Wextra -Werror -I"$root/src" "$root/tests/test_capture.c" "$root/src/capture.c" -o "$root/build/tests/test_capture"
 "$root/build/tests/test_capture"
+
+${CC:-cc} -std=gnu11 -Wall -Wextra -Werror -I"$root/src" "$root/tests/test_owner.c" "$root/src/config.c" -o "$root/build/tests/test_owner"
+"$root/build/tests/test_owner"

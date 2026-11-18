@@ -3,13 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 const struct stream_profile stream_profiles[STREAM_COUNT] = {
-    {0, "/live/0", 1920, 1080, 4096, 20},
-    {1, "/live/1", 960, 540, 1024, 20},
+    {0, "/live/0", 1920, 1080, 4096, 18},
+    {1, "/live/1", 960, 540, 1024, 18},
 };
 int parse_options(int argc, char **argv, struct stream_options *options)
 {
     const char *iq_dir = NULL;
-    const char *usage = "Usage: %s [-c h264|h265] {[-a IQ_DIR] [-F 30 [-T]] | -N}\n";
+    const char *usage = "Usage: %s [-c h264|h265] {[-a IQ_DIR] [-F 18 [-T]] | -N}\n";
     bool fixed_sensor_fps = false;
     bool test_tnr = false;
     bool skip_aiq = false;
@@ -24,7 +24,7 @@ int parse_options(int argc, char **argv, struct stream_options *options)
             iq_dir = optarg;
             continue;
         }
-        if (option == 'F' && strcmp(optarg, "30") == 0) {
+        if (option == 'F' && strcmp(optarg, "18") == 0) {
             fixed_sensor_fps = true;
             continue;
         }

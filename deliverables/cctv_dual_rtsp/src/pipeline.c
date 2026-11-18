@@ -3,6 +3,7 @@
 #include "runtime.h"
 #include "video.h"
 #include "isp.h"
+#include "osd.h"
 #include "status.h"
 #include "rtsp_server.h"
 #include "rk_mpi_sys.h"
@@ -81,6 +82,7 @@ int run_once(int argc, char **argv, unsigned restart_attempt)
             goto cleanup;
     }
 
+    if (osd_start()) fprintf(stderr, "OSD unavailable; streaming continues\n");
     uint64_t last_report_ms = monotonic_ms();
     uint64_t last_status_ms = 0;
     bool fps_requested = false;
@@ -124,6 +126,11 @@ int run_once(int argc, char **argv, unsigned restart_attempt)
                 double fps = video->frames * 1000.0 / (now - last_report_ms);
                 printf("STREAM path=%s venc_fps=%.2f rtsp_tx_errors=%u\n",
                        video->path, fps, video->tx_errors);
+                printf("FRAME_TIMING path=%s pts_delta_min=%llu pts_delta_max=%llu samples=%u non_increasing=%u\n",
+                       video->path, (unsigned long long)video->pts_min_delta,
+                       (unsigned long long)video->pts_max_delta, video->pts_samples, video->pts_non_increasing);
+                video->pts_min_delta = video->pts_max_delta = 0;
+                video->pts_samples = video->pts_non_increasing = 0;
                 video->frames = 0;
                 video->tx_errors = 0;
             }
@@ -148,6 +155,7 @@ int run_once(int argc, char **argv, unsigned restart_attempt)
 cleanup:
     alarm(15);
     publish_status(stopping ? "stopping" : "recovering", videos, restart_attempt);
+    osd_stop();
     for (size_t i = video_count; i > 0; --i)
         stop_video(&videos[i - 1]);
     if (device_enabled)

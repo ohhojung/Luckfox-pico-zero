@@ -1540,3 +1540,29 @@
 이후 state=failed, attempt=3, cctv stopped 확인. 로그에 NO_FRAME과 재시도, 커널에 rkisp_stream_stop 및 rkisp_isp_sd_s_stream timeout이 반복됩니다. 재초기화 후 영상 복구 실패는 확인됐고, 최초 원인은 미확정입니다. VLC 종료나 VPN을 원인으로 단정하지 않습니다. 종료 이후 WireGuard handshake 응답도 기록됐습니다.
 
 다음 시험: 실패 로그를 보관하고 재부팅 후 VLC 미접속 상태에서 프레임·health 유지 확인, 이어 접속/종료 전후 비교. 해당 시험 결과는 아직 수신하지 않았습니다. 이 커밋은 개발 진행 상태이며 안정화 완료본이 아닙니다.
+
+## 2026-11-14 BoardServer 최신 동기화
+- 참조 main을 46703b3에서 7d1a857로 fast-forward. 변경은 네 문서뿐이며 실행 코드와 서버 계약 변경 없음.
+- read-only check-board.sh 추가: 영상 프로세스/프레임, heartbeat 프로세스, rkipc 경쟁, WireGuard handshake 나이, route, UTC. 실제 HTTP200·서버/웹 영상은 별도 검증.
+- 기존 H265/20fps/wg0 및 5초 heartbeat 유지. 팀장님 보드 전용 AE12/VTS3750 설정 복사하지 않음.
+- 기존·진단·서비스 정상 재생을 사용자 확인했으나 앞선 멈춤 원인 미확정. codec 패키지 dry-run 통과 후 실제 재설치 미확인. 마지막 영상 프로세스 부재 및 VPN PersistentKeepalive 파싱 오류 복구 결과 미수신.
+- 새 packages/i2-board-20261114-review 생성, 셸 구문 및 체크섬 PASS. C 변경 없어 기존 ARM 바이너리 재사용. 실제 보드/VM 조작 없음.
+## 2026-11-14 VTS3750 전환 및 카메라 점유 조사
+- 사용자 요청: 끊김 완화를 위해 센서 VTS3750/출력18fps로 전환. 두 채널 GOP18, 새 서비스 -F18.
+- AIQ nominal 값은 보드 차이를 고려해 baseline reported_fps * frame_lines / 3750으로 계산. 실제3750줄 적용과 균일18fps는 보드 검증 필요.
+- rkipc가 이미 실행 중이면 서비스/직접 실행이 AIQ 초기화 전에 거부하도록 추가. 현재 cctv들끼리는 기존 프로세스 락 사용.
+- 사용자가 말한 실제 점유 프로세스는 rkipc가 아니라 이름을 기억하지 못하는 cctv 계열. ps -ef 결과 요청 중이며 정확한 파일/자동 시작 경로는 미확인. 이 문제가 해결됐다고 선언하지 않음.
+## 2026-11-15 안정성 보완 판단
+- 사용자 보고로 VTS3750 패치 영구 교체 및 재부팅 후 S59 health 정상, 양쪽17.96fps, frame_lines3750, S60 PID559 실행 확인. 이전 설치 미확인 기록을 갱신한다. 서버 HTTP200/장시간 안정성은 미확인.
+- rkipc 운영 방식으로 전면 교체하는 대신 현재 모듈형 구조 유지. 오디오 없는 RTSP/코덱 선택/상태파일/18fps 동작을 활용한다.
+- 현재 소스의 조기 CLI 검증과 heartbeat 최근 양쪽 프레임 상태 검사를 유지·검증. 추가로 무효 인코더 데이터를 정상 프레임에서 제외하고, SDK PTS 최소/최대 간격 및 비증가 횟수 계측 추가.
+- 새 패키지 packages/i2-board-20261115-reliability. 실제 보드 조작 없음. 이전 VTS 보드 성공과 새 보완판의 배포 검증을 구분한다.
+## 2026-11-15 heartbeat 호환 및 OSD
+- 사용자 요청에 따라 heartbeat rtsp_ok를 최근 프레임 판정에서 기존 프로세스 실행 기준으로 되돌림. JSON 다섯 필드/자료형/상태online/config_version0 유지. 프레임 검사는 S59 health로 별도. ARM 빌드·QEMU HTTP 회귀 PASS.
+- 팀장님 streamer osd.c(7d1a857)를 이식해 양쪽 VENC에 localtime 날짜·초 오버레이. 스레드 종료/RGN 해제는 인코더 정리 전에 수행. 실패 시 송출 유지. CCTV_OSD=0으로 시험 비활성화 가능.
+- native OSD 렌더러 두배율/색/초갱신 및 ASan/UBSan PASS. 실제보드 시각·색·위치·프레임유지는 아직미검증. 최신패키지 i2-board-20261115-osd.
+## 2026-11-16 OSD 시험 및 교체 기록
+- 사용자 로그에서 양쪽 RGN OSD 초기화 성공 확인. 사용자가 TZ=KST-9 실행으로 표시 시간 정상 확인.
+- 서비스에 export TZ=KST-9 반영, packages/i2-board-20261116-osd-kst 생성 및 체크섬 검증. 이후 사용자 ps에 /usr/bin/cctv-dual-rtsp -F18 -c h265 실행 확인. OSD 교체 후 재부팅 검증은 별도 미수신.
+- heartbeat JSON은 팀장님과 동일 다섯 필드 유지. rtsp_ok는 프로세스 기준, wg_ok는 IFF_UP. 프레임 검사 헬퍼는 별도 진단이며 전송 판단에 연결하지 않음.
+- /oem/usr/bin의 과거 cctv_person_npu_demo와 FPS시험4개 정리 명령 안내. 사용자가 삭제 완료 출력을 보낸 것은 아니므로 실제 삭제 여부 미확인.
